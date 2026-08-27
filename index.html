@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voltia · Plataforma de Comercio de Energía</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+  :root{
+    --bg: #0A1420;
+    --bg-grid: #0D1C2B;
+    --panel: #101E2B;
+    --panel-2: #16283A;
+    --line: #223447;
+    --text: #E6EDF3;
+    --muted: #7C8A99;
+    --amber: #F5A623;
+    --amber-dim: #6b5324;
+    --teal: #2DD4BF;
+    --red: #F0553C;
+    --green: #4ADE80;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(180deg, rgba(245,166,35,0.05), transparent 200px),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.02) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.02) 40px),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  header.top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(13,28,43,0.6);
+    position: sticky; top:0; z-index:10;
+    backdrop-filter: blur(6px);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width:30px; height:30px; border-radius:7px;
+    background: linear-gradient(135deg, var(--amber), #c47a12);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; color:#1a1206;
+  }
+  .brand-name{ font-family:'Space Grotesk'; font-weight:700; font-size:19px; letter-spacing:0.2px;}
+  .brand-sub{ color:var(--muted); font-size:12px; margin-top:1px;}
+  .api-box{ display:flex; align-items:center; gap:8px; }
+  .api-box input{
+    background: var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:6px; padding:7px 10px; font-size:12px; width:220px; font-family:'JetBrains Mono';
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; background: var(--muted); }
+  .dot.ok{ background: var(--green); box-shadow:0 0 8px var(--green); }
+  .dot.bad{ background: var(--red); box-shadow:0 0 8px var(--red); }
+
+  /* Ticker */
+  .ticker-wrap{
+    overflow:hidden; white-space:nowrap; border-bottom:1px solid var(--line);
+    background: #0C1926;
+  }
+  .ticker{
+    display:inline-block; padding: 8px 0;
+    animation: scroll 22s linear infinite;
+  }
+  .ticker span{ margin-right:40px; font-family:'JetBrains Mono'; font-size:12.5px; color:var(--muted); }
+  .ticker span b{ color: var(--teal); font-weight:600; }
+  .ticker span.up{ color: var(--green); }
+  @keyframes scroll{ from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
+
+  nav.tabs{
+    display:flex; gap:4px; padding: 16px 28px 0 28px;
+  }
+  nav.tabs button{
+    background:transparent; border:none; color:var(--muted);
+    font-family:'Space Grotesk'; font-size:14px; font-weight:600;
+    padding:10px 16px; cursor:pointer; border-radius:8px 8px 0 0;
+    border-bottom: 2px solid transparent;
+  }
+  nav.tabs button.active{ color: var(--text); border-bottom:2px solid var(--amber); }
+  nav.tabs button:hover{ color: var(--text); }
+
+  main{ padding: 22px 28px 60px 28px; max-width:1180px; margin:0 auto; }
+  .grid{ display:grid; gap:18px; }
+  .grid.cols-2{ grid-template-columns: 1fr 1fr; }
+  .grid.cols-3{ grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 860px){ .grid.cols-2, .grid.cols-3{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card h3{
+    font-family:'Space Grotesk'; font-size:14px; margin:0 0 4px 0;
+    text-transform:uppercase; letter-spacing:0.6px; color:var(--muted);
+  }
+  .card .big{ font-family:'JetBrains Mono'; font-size:26px; font-weight:700; margin-top:2px;}
+  .card .big.amber{ color:var(--amber); }
+  .card .big.teal{ color:var(--teal); }
+
+  label{ display:block; font-size:12px; color:var(--muted); margin: 10px 0 4px; }
+  input, select{
+    width:100%; background: var(--panel-2); border:1px solid var(--line);
+    color:var(--text); border-radius:7px; padding:9px 10px; font-size:14px; font-family:'Inter';
+  }
+  .btn{
+    margin-top:14px; border:none; border-radius:7px; padding:10px 16px;
+    font-family:'Space Grotesk'; font-weight:600; font-size:13.5px; cursor:pointer;
+    background: var(--amber); color:#1a1206;
+  }
+  .btn.secondary{ background: transparent; border:1px solid var(--teal); color:var(--teal); }
+  .btn.ghost{ background: transparent; border:1px solid var(--line); color:var(--text); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  table{ width:100%; border-collapse: collapse; font-size:13px; }
+  th{ text-align:left; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;
+      letter-spacing:0.4px; padding:6px 8px; border-bottom:1px solid var(--line); }
+  td{ padding:8px; border-bottom:1px solid rgba(255,255,255,0.04); font-family:'JetBrains Mono'; }
+  tr:hover td{ background: rgba(255,255,255,0.02); }
+  .badge{ padding:2px 8px; border-radius:20px; font-size:11px; font-family:'Inter'; font-weight:600; }
+  .badge.venta{ background: rgba(240,85,60,0.15); color:var(--red); }
+  .badge.compra{ background: rgba(74,222,128,0.15); color:var(--green); }
+  .empty{ color:var(--muted); font-size:13px; padding:14px 0; }
+  .section-title{ font-family:'Space Grotesk'; font-size:20px; margin: 4px 0 16px; }
+  .helper{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .row-inline{ display:flex; gap:10px; }
+  .row-inline > *{ flex:1; }
+  .toast{
+    position:fixed; bottom:20px; right:20px; background:var(--panel-2);
+    border:1px solid var(--line); border-left:4px solid var(--teal);
+    padding:12px 16px; border-radius:8px; font-size:13px; max-width:320px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.error{ border-left-color: var(--red); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div>
+        <div class="brand-name">Voltia</div>
+        <div class="brand-sub">Plataforma de comercio de energía · Singleton API</div>
+      </div>
+    </div>
+    <div class="api-box">
+      <span class="dot" :class="apiOk === null ? '' : (apiOk ? 'ok' : 'bad')"></span>
+      <input v-model="apiBase" @change="verificarApi" placeholder="http://localhost:8000" />
+    </div>
+  </header>
+
+  <div class="ticker-wrap" v-if="transacciones.length">
+    <div class="ticker">
+      <span v-for="(tx, i) in tickerItems" :key="i" :class="{up: i % 2 === 0}">
+        {{ tx.vendedor }} → {{ tx.comprador }} <b>{{ tx.cantidad_kwh }} kWh</b> @ ${{ tx.precio_kwh }}/kWh
+      </span>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button :class="{active: tab==='mercado'}" @click="tab='mercado'">Mercado</button>
+    <button :class="{active: tab==='usuarios'}" @click="tab='usuarios'">Usuarios</button>
+    <button :class="{active: tab==='iot'}" @click="tab='iot'">IoT &amp; Predicción</button>
+    <button :class="{active: tab==='historial'}" @click="tab='historial'">Historial</button>
+  </nav>
+
+  <main>
+
+    <!-- MERCADO -->
+    <section v-if="tab==='mercado'">
+      <div class="grid cols-3" style="margin-bottom:18px;">
+        <div class="card">
+          <h3>Órdenes de venta</h3>
+          <div class="big amber">{{ ordenes.ventas.length }}</div>
+        </div>
+        <div class="card">
+          <h3>Órdenes de compra</h3>
+          <div class="big teal">{{ ordenes.compras.length }}</div>
+        </div>
+        <div class="card">
+          <h3>Transacciones cerradas</h3>
+          <div class="big">{{ transacciones.length }}</div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Publicar excedente (venta)</h3>
+          <label>Usuario</label>
+          <select v-model="ventaForm.usuario_id">
+            <option disabled value="">Selecciona usuario</option>
+            <option v-for="u in usuarios" :key="u.id" :value="u.id">{{ u.nombre }} ({{ u.id }})</option>
+          </select>
+          <div class="row-inline">
+            <div>
+              <label>Cantidad (kWh)</label>
+              <input type="number" v-model.number="ventaForm.cantidad_kwh" min="0" step="0.1" />
+            </div>
+            <div>
+              <label>Precio ($/kWh)</label>
+              <input type="number" v-model.number="ventaForm.precio_kwh" min="0" step="0.01" />
+            </div>
+          </div>
+          <button class="btn" @click="publicarVenta" :disabled="!ventaForm.usuario_id">Publicar venta</button>
+        </div>
+
+        <div class="card">
+          <h3>Ofertar compra</h3>
+          <label>Usuario</label>
+          <select v-model="compraForm.usuario_id">
+            <option disabled value="">Selecciona usuario</option>
+            <option v-for="u in usuarios" :key="u.id" :value="u.id">{{ u.nombre }} ({{ u.id }})</option>
+          </select>
+          <div class="row-inline">
+            <div>
+              <label>Cantidad (kWh)</label>
+              <input type="number" v-model.number="compraForm.cantidad_kwh" min="0" step="0.1" />
+            </div>
+            <div>
+              <label>Precio ($/kWh)</label>
+              <input type="number" v-model.number="compraForm.precio_kwh" min="0" step="0.01" />
+            </div>
+          </div>
+          <button class="btn secondary" @click="publicarCompra" :disabled="!compraForm.usuario_id">Publicar compra</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="margin:0;">Libro de órdenes en vivo</h3>
+          <button class="btn" @click="ejecutarSubasta">Ejecutar subasta</button>
+        </div>
+        <table style="margin-top:12px;">
+          <thead><tr><th>Tipo</th><th>Usuario</th><th>Cantidad</th><th>Precio</th></tr></thead>
+          <tbody>
+            <tr v-for="o in ordenes.ventas" :key="'v'+o.id">
+              <td><span class="badge venta">Venta</span></td><td>{{o.usuario_id}}</td><td>{{o.cantidad_kwh}} kWh</td><td>${{o.precio_kwh}}</td>
+            </tr>
+            <tr v-for="o in ordenes.compras" :key="'c'+o.id">
+              <td><span class="badge compra">Compra</span></td><td>{{o.usuario_id}}</td><td>{{o.cantidad_kwh}} kWh</td><td>${{o.precio_kwh}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-if="!ordenes.ventas.length && !ordenes.compras.length">Aún no hay órdenes activas.</div>
+      </div>
+    </section>
+
+    <!-- USUARIOS -->
+    <section v-if="tab==='usuarios'">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Registrar usuario</h3>
+          <label>ID</label>
+          <input v-model="usuarioForm.id" placeholder="u1" />
+          <label>Nombre</label>
+          <input v-model="usuarioForm.nombre" placeholder="Ana" />
+          <button class="btn" @click="crearUsuario" :disabled="!usuarioForm.id || !usuarioForm.nombre">Registrar</button>
+        </div>
+        <div class="card">
+          <h3>Usuarios registrados</h3>
+          <table>
+            <thead><tr><th>ID</th><th>Nombre</th></tr></thead>
+            <tbody>
+              <tr v-for="u in usuarios" :key="u.id"><td>{{u.id}}</td><td class="mono" style="font-family:Inter;">{{u.nombre}}</td></tr>
+            </tbody>
+          </table>
+          <div class="empty" v-if="!usuarios.length">Todavía no hay usuarios.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IOT -->
+    <section v-if="tab==='iot'">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Conectar dispositivo</h3>
+          <label>ID del dispositivo</label>
+          <input v-model="dispositivoForm.id" placeholder="panel-01" />
+          <label>Usuario dueño</label>
+          <select v-model="dispositivoForm.usuario_id">
+            <option disabled value="">Selecciona usuario</option>
+            <option v-for="u in usuarios" :key="u.id" :value="u.id">{{ u.nombre }} ({{ u.id }})</option>
+          </select>
+          <label>Tipo</label>
+          <select v-model="dispositivoForm.tipo">
+            <option value="panel_solar">Panel solar</option>
+            <option value="bateria">Batería</option>
+            <option value="medidor">Medidor</option>
+          </select>
+          <button class="btn" @click="crearDispositivo" :disabled="!dispositivoForm.id || !dispositivoForm.usuario_id">Conectar</button>
+        </div>
+
+        <div class="card">
+          <h3>Simular lecturas y predecir</h3>
+          <label>Dispositivo</label>
+          <select v-model="dispositivoSeleccionado">
+            <option disabled value="">Selecciona dispositivo</option>
+            <option v-for="d in dispositivos" :key="d.id" :value="d.id">{{ d.id }} ({{ d.tipo }})</option>
+          </select>
+          <button class="btn secondary" @click="simularLecturas" :disabled="!dispositivoSeleccionado" style="margin-right:10px;">Simular 5 lecturas</button>
+          <button class="btn ghost" @click="obtenerPrediccion" :disabled="!dispositivoSeleccionado">Predecir siguiente</button>
+
+          <div v-if="prediccion !== null" style="margin-top:16px;">
+            <h3>Predicción (media móvil)</h3>
+            <div class="big teal">{{ prediccion }} kWh</div>
+          </div>
+          <div v-if="lecturasActuales.length" style="margin-top:14px;">
+            <label>Últimas lecturas</label>
+            <div class="mono helper">{{ lecturasActuales.join(' · ') }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section v-if="tab==='historial'">
+      <div class="card">
+        <h3>Transacciones ejecutadas</h3>
+        <table>
+          <thead><tr><th>Vendedor</th><th>Comprador</th><th>Cantidad</th><th>Precio</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr v-for="(tx, i) in [...transacciones].reverse()" :key="i">
+              <td>{{tx.vendedor}}</td><td>{{tx.comprador}}</td><td>{{tx.cantidad_kwh}} kWh</td><td>${{tx.precio_kwh}}</td><td>${{tx.total}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-if="!transacciones.length">Todavía no se ha ejecutado ninguna subasta.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast" :class="{error: toast.error}" v-if="toast.msg">{{ toast.msg }}</div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data(){
+    return {
+      apiBase: 'http://localhost:8000',
+      apiOk: null,
+      tab: 'mercado',
+      usuarios: [],
+      dispositivos: [],
+      ordenes: { ventas: [], compras: [] },
+      transacciones: [],
+      usuarioForm: { id: '', nombre: '' },
+      ventaForm: { usuario_id: '', cantidad_kwh: 5, precio_kwh: 0.15 },
+      compraForm: { usuario_id: '', cantidad_kwh: 5, precio_kwh: 0.18 },
+      dispositivoForm: { id: '', usuario_id: '', tipo: 'panel_solar' },
+      dispositivoSeleccionado: '',
+      lecturasActuales: [],
+      prediccion: null,
+      toast: { msg: '', error: false },
+    }
+  },
+  computed: {
+    tickerItems(){
+      const items = this.transacciones.slice(-8);
+      return items.concat(items); // loop duplicado para el efecto ticker
+    }
+  },
+  mounted(){
+    this.verificarApi();
+    this.refrescarTodo();
+  },
+  methods: {
+    async verificarApi(){
+      try{
+        const r = await fetch(this.apiBase + '/');
+        this.apiOk = r.ok;
+      }catch(e){ this.apiOk = false; }
+    },
+    mostrarToast(msg, error=false){
+      this.toast = { msg, error };
+      setTimeout(() => { this.toast = { msg: '', error: false }; }, 3500);
+    },
+    async refrescarTodo(){
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones()]);
+    },
+    async cargarUsuarios(){
+      try{ this.usuarios = await (await fetch(this.apiBase + '/usuarios')).json(); }catch(e){}
+    },
+    async cargarDispositivos(){
+      try{ this.dispositivos = await (await fetch(this.apiBase + '/iot/dispositivos')).json(); }catch(e){}
+    },
+    async cargarOrdenes(){
+      try{ this.ordenes = await (await fetch(this.apiBase + '/ordenes')).json(); }catch(e){}
+    },
+    async cargarTransacciones(){
+      try{ this.transacciones = await (await fetch(this.apiBase + '/transacciones')).json(); }catch(e){}
+    },
+    async crearUsuario(){
+      try{
+        const r = await fetch(this.apiBase + '/usuarios', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(this.usuarioForm)
+        });
+        if(!r.ok) throw new Error('No se pudo registrar');
+        this.mostrarToast('Usuario registrado: ' + this.usuarioForm.nombre);
+        this.usuarioForm = { id:'', nombre:'' };
+        this.cargarUsuarios();
+      }catch(e){ this.mostrarToast('Error al registrar usuario', true); }
+    },
+    async publicarVenta(){
+      try{
+        const r = await fetch(this.apiBase + '/ordenes/venta', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(this.ventaForm)
+        });
+        if(!r.ok) throw new Error();
+        this.mostrarToast('Oferta de venta publicada');
+        this.cargarOrdenes();
+      }catch(e){ this.mostrarToast('Error al publicar venta', true); }
+    },
+    async publicarCompra(){
+      try{
+        const r = await fetch(this.apiBase + '/ordenes/compra', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(this.compraForm)
+        });
+        if(!r.ok) throw new Error();
+        this.mostrarToast('Oferta de compra publicada');
+        this.cargarOrdenes();
+      }catch(e){ this.mostrarToast('Error al publicar compra', true); }
+    },
+    async ejecutarSubasta(){
+      try{
+        const r = await fetch(this.apiBase + '/subasta/ejecutar', { method:'POST' });
+        const nuevas = await r.json();
+        this.mostrarToast(nuevas.length ? `Subasta ejecutada: ${nuevas.length} transacción(es)` : 'Subasta ejecutada: sin cruces posibles');
+        await Promise.all([this.cargarOrdenes(), this.cargarTransacciones()]);
+      }catch(e){ this.mostrarToast('Error al ejecutar la subasta', true); }
+    },
+    async crearDispositivo(){
+      try{
+        const r = await fetch(this.apiBase + '/iot/dispositivos', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(this.dispositivoForm)
+        });
+        if(!r.ok) throw new Error();
+        this.mostrarToast('Dispositivo conectado: ' + this.dispositivoForm.id);
+        this.dispositivoForm = { id:'', usuario_id:'', tipo:'panel_solar' };
+        this.cargarDispositivos();
+      }catch(e){ this.mostrarToast('Error al conectar dispositivo', true); }
+    },
+    async simularLecturas(){
+      try{
+        const r = await fetch(this.apiBase + `/iot/dispositivos/${this.dispositivoSeleccionado}/simular?n=5`, { method:'POST' });
+        const data = await r.json();
+        this.lecturasActuales = data.lecturas;
+        this.mostrarToast('5 lecturas simuladas para ' + this.dispositivoSeleccionado);
+      }catch(e){ this.mostrarToast('Error al simular lecturas', true); }
+    },
+    async obtenerPrediccion(){
+      try{
+        const r = await fetch(this.apiBase + `/iot/dispositivos/${this.dispositivoSeleccionado}/prediccion`);
+        const data = await r.json();
+        this.prediccion = data.prediccion_kwh;
+      }catch(e){ this.mostrarToast('Error al predecir', true); }
+    },
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

@@ -1,9 +1,7 @@
-# plataforma-comercio-energia
+# Voltia — Plataforma de Comercio de Energía (Backend + Frontend)
 
-La Plataforma de Comercio de Energía es un sistema digital diseñado para facilitar la compra y venta de excedentes energéticos entre usuarios. El proyecto integra un mecanismo de subastas en tiempo real, dispositivos IoT domésticos y modelos de predicción de producción y consumo energético. Su propósito es mejorar el aprovechamiento de la energía renovable, promover la participación de los usuarios en el mercado energético y proporcionar herramientas inteligentes para el monitoreo y la toma de decisiones.
-
-La plataforma contempla funcionalidades como el registro de usuarios, publicación de ofertas, participación en subastas, monitoreo del consumo y la producción, integración con dispositivos IoT y análisis predictivo. El sistema está planteado con una arquitectura modular y escalable, que puede ampliarse posteriormente con pagos electrónicos, aplicaciones móviles, integración con empresas distribuidoras y tecnologías como blockchain..
-
+Implementación full-stack del proyecto #16, sobre la base del patrón **Singleton**
+ya usado en `plataforma_energia.py`.
 
 ## Estructura
 
@@ -43,11 +41,28 @@ Al abrirlo, confirma que el campo de la API (arriba a la derecha) diga
 
 ## 3. Flujo de prueba sugerido
 
-1. **Usuarios** → registra 2 usuarios (ej. `u1` Ana, `u2` Luis)
-2. **Mercado** → Ana publica una venta (10 kWh a $0.15), Luis publica una compra (6 kWh a $0.18)
+1. **Login** → regístrate como `u1` / Ana con una contraseña, luego cierra sesión y regístrate como `u2` / Luis
+2. **Mercado** → con la sesión de Ana publica una venta (10 kWh a $0.15); cambia de sesión a Luis y publica una compra (6 kWh a $0.18)
 3. Haz clic en **"Ejecutar subasta"** → se genera una transacción
-4. **IoT & Predicción** → conecta un panel solar a Ana, simula lecturas y pide la predicción
+4. **IoT & Predicción** → conecta un panel solar (queda ligado al usuario con sesión activa), simula lecturas y pide la predicción
 5. **Historial** → revisa las transacciones cerradas
+
+## Autenticación
+
+Las cuentas y contraseñas también viven en el Singleton `PlataformaEnergia` (se
+pierden al reiniciar el backend, igual que el resto del estado). El flujo es:
+
+- `POST /auth/registro` (`id`, `nombre`, `password`) → crea el usuario con la
+  contraseña hasheada (`bcrypt`) y devuelve un JWT.
+- `POST /auth/login` (`id`, `password`) → verifica el hash y devuelve un JWT.
+- Los endpoints que pertenecen a un usuario (`/ordenes/venta`, `/ordenes/compra`,
+  `/iot/dispositivos`) requieren `Authorization: Bearer <token>`; el `usuario_id`
+  se toma del token, no del cuerpo de la petición, para que nadie pueda publicar
+  órdenes en nombre de otro usuario.
+
+Es una autenticación pensada para el prototipo: el secreto (`SECRET_KEY`) tiene
+un valor por defecto en `main.py` y se puede sobrescribir con la variable de
+entorno `SECRET_KEY`.
 
 ## Por qué el Singleton sigue siendo clave aquí
 
