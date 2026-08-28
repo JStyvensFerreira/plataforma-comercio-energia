@@ -154,3 +154,11 @@ Seguridad ante concurrencia: uvicorn atiende múltiples requests simultáneos (v
 Base para el login: el JWT que agregamos verifica identidad contra ese mismo usuarios del Singleton — sin él, cada request podría terminar autenticando contra una copia distinta del sistema.
 Límite conocido: el estado se pierde si el proceso se reinicia y no escala a múltiples workers/procesos (cada uno tendría su propio Singleton) — aceptable para el prototipo, pero el primer punto a resolver si migran a una base de datos real.
 
+
+
+****Adjuntamos Link de video de la validacion del Patron en la Plataforma****
+
+
+https://unidadestecno-my.sharepoint.com/:f:/g/personal/jsferreira_uts_edu_co/IgCG4eGFTkwyQLdp9vVTYeTBARpYfr_fUcNV3tDZxlGNvM4?e=0Bk46E
+
+
