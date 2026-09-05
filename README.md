@@ -5,7 +5,33 @@ La Plataforma de Comercio de Energía es un sistema digital diseñado para facil
 La plataforma contempla funcionalidades como el registro de usuarios, publicación de ofertas, participación en subastas, monitoreo del consumo y la producción, integración con dispositivos IoT y análisis predictivo. El sistema está planteado con una arquitectura modular y escalable, que puede ampliarse posteriormente con pagos electrónicos, aplicaciones móviles, integración con empresas distribuidoras y tecnologías como blockchain..
 
 
-## Estructura
+## Patrones de diseño (`src/`)
+
+Todo el código de los patrones de diseño aplicados está bajo `src/`, con una
+carpeta por patrón que contiene su implementación y sus pruebas:
+
+```
+src/
+├── README.md                       # documento de pruebas (casos por patrón)
+├── singleton/
+│   ├── plataforma_energia.py       # implementación del patrón Singleton
+│   ├── test_singleton.py           # pruebas del patrón
+│   └── conftest.py
+└── factory_method/
+    ├── factory_method.py           # implementación del patrón Factory Method
+    ├── test_factory_method.py      # pruebas del patrón
+    └── conftest.py
+```
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest              # ejecuta todas las pruebas de los patrones
+python validar_pruebas.py     # resumen por patrón (o validar_pruebas.bat en Windows)
+```
+
+Ver [`src/README.md`](src/README.md) para el detalle de cada caso de prueba.
+
+## Estructura de la aplicación
 
 ```
 plataforma-energia-app/

@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 target/
+.pytest_cache/
+
+# Herramientas locales
+.claude/
+
+# Archivos temporales de Microsoft Office
+~$*
