@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Validador de las pruebas de los patrones SINGLETON y FACTORY METHOD.
+Validador de las pruebas de los patrones SINGLETON, FACTORY METHOD y ABSTRACT FACTORY.
 
 Ejecuta la batería de pruebas de:
-    - src/singleton/test_singleton.py             (patrón Singleton)
-    - src/factory_method/test_factory_method.py   (patrón Factory Method)
+    - Patrones/singleton/test_singleton.py                  (patrón Singleton)
+    - Patrones/factory_method/test_factory_method.py        (patrón Factory Method)
+    - Patrones/abstract_factory/test_abstract_factory.py    (patrón Abstract Factory)
 
 y muestra un resumen claro con el resultado de cada patrón.
 
 Uso:
-    python validar_pruebas.py            # ejecuta ambos patrones
+    python validar_pruebas.py            # ejecuta los tres patrones
     python validar_pruebas.py singleton  # solo Singleton
     python validar_pruebas.py factory    # solo Factory Method
+    python validar_pruebas.py abstract   # solo Abstract Factory
     python validar_pruebas.py -v         # salida detallada de pytest
 """
 
@@ -26,11 +28,15 @@ RAIZ = Path(__file__).resolve().parent
 SUITES = {
     "singleton": {
         "titulo": "Patron SINGLETON",
-        "archivo": RAIZ / "src" / "singleton" / "test_singleton.py",
+        "archivo": RAIZ / "Patrones" / "singleton" / "test_singleton.py",
     },
     "factory": {
         "titulo": "Patron FACTORY METHOD",
-        "archivo": RAIZ / "src" / "factory_method" / "test_factory_method.py",
+        "archivo": RAIZ / "Patrones" / "factory_method" / "test_factory_method.py",
+    },
+    "abstract": {
+        "titulo": "Patron ABSTRACT FACTORY",
+        "archivo": RAIZ / "Patrones" / "abstract_factory" / "test_abstract_factory.py",
     },
 }
 
@@ -82,6 +88,8 @@ def main(argv: list[str]) -> int:
                 claves.append("singleton")
             elif arg.startswith("factory") or arg.startswith("fabrica"):
                 claves.append("factory")
+            elif arg.startswith("abstract") or arg.startswith("abstracta"):
+                claves.append("abstract")
             else:
                 print(f"Argumento no reconocido: {arg}")
                 print(__doc__)

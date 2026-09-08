@@ -3,18 +3,22 @@
 Pruebas automatizadas (pytest) que validan la implementación de cada patrón
 de diseño aplicado en la Plataforma de Comercio de Energía.
 
-Cada patrón vive en su propia carpeta dentro de `src/`, junto con su código y
+Cada patrón vive en su propia carpeta dentro de `Patrones/`, junto con su código y
 sus pruebas:
 
 ```
-src/
+Patrones/
 ├── singleton/
-│   ├── plataforma_energia.py   # código del patrón
-│   ├── test_singleton.py       # pruebas del patrón
-│   └── conftest.py             # reinicia el Singleton entre pruebas
-└── factory_method/
-    ├── factory_method.py       # código del patrón
-    ├── test_factory_method.py  # pruebas del patrón
+│   ├── plataforma_energia.py       # código del patrón
+│   ├── test_singleton.py           # pruebas del patrón
+│   └── conftest.py                 # reinicia el Singleton entre pruebas
+├── factory_method/
+│   ├── factory_method.py           # código del patrón
+│   ├── test_factory_method.py      # pruebas del patrón
+│   └── conftest.py
+└── abstract_factory/
+    ├── abstract_factory.py         # código del patrón
+    ├── test_abstract_factory.py    # pruebas del patrón
     └── conftest.py
 ```
 
@@ -22,6 +26,7 @@ src/
 |---|---|---|
 | Singleton | [`plataforma_energia.py`](singleton/plataforma_energia.py) | [`test_singleton.py`](singleton/test_singleton.py) |
 | Factory Method | [`factory_method.py`](factory_method/factory_method.py) | [`test_factory_method.py`](factory_method/test_factory_method.py) |
+| Abstract Factory | [`abstract_factory.py`](abstract_factory/abstract_factory.py) | [`test_abstract_factory.py`](abstract_factory/test_abstract_factory.py) |
 
 ## Cómo ejecutar
 
@@ -34,10 +39,10 @@ python -m pytest
 Opciones útiles:
 
 ```bash
-python -m pytest src/singleton                     # solo un patrón
-python -m pytest -k subasta                        # por palabra clave
-python -m pytest -q                                # salida compacta
-python -m pytest -v                                # detalle por caso (por defecto)
+python -m pytest Patrones/singleton                 # solo un patrón
+python -m pytest -k subasta                         # por palabra clave
+python -m pytest -q                                 # salida compacta
+python -m pytest -v                                 # detalle por caso (por defecto)
 ```
 
 - Configuración en [`pytest.ini`](../pytest.ini).
@@ -49,10 +54,11 @@ python -m pytest -v                                # detalle por caso (por defec
 ## Resultado esperado
 
 ```
-src\factory_method\test_factory_method.py ................               [ 47%]
-src\singleton\test_singleton.py ..................                       [100%]
+Patrones\abstract_factory\test_abstract_factory.py ...........................  [ 44%]
+Patrones\factory_method\test_factory_method.py ................                [ 70%]
+Patrones\singleton\test_singleton.py ..................                        [100%]
 
-34 passed
+61 passed
 ```
 
 ---
@@ -103,3 +109,30 @@ obliga a modificar el código existente.
 | F-10 | `test_bateria_puede_cargar_o_descargar` | Lectura de la batería en `[-2.5, 2.5]` (carga/descarga) |
 | F-11 | `test_medidor_solo_registra_consumo` | Lectura del medidor siempre `<= 0` (demanda) |
 | F-12 | `test_to_dict_incluye_el_tipo_concreto` | La serialización expone el `tipo` del producto concreto |
+
+## Casos de prueba — Abstract Factory
+
+Verifica que el código cliente (`ServicioNotificaciones`) nunca instancia
+notificadores concretos: cada fábrica de canal crea la **familia completa** de
+notificadores de ese canal (transacción + alerta IoT + reporte), todos coherentes
+entre sí, y agregar un canal nuevo no obliga a modificar el código existente.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| A-01 | `test_no_se_puede_instanciar_la_fabrica_abstracta` | `CanalNotificacionFactory` abstracta → `TypeError` |
+| A-02 | `test_no_se_pueden_instanciar_los_productos_abstractos` (x3) | Los tres productos abstractos → `TypeError` |
+| A-03 | `test_devuelve_la_fabrica_de_canal_correcta` (x3) | `obtener_canal(nombre)` retorna la fábrica esperada y su `canal` coincide |
+| A-04 | `test_canal_no_soportado_lanza_value_error_con_los_disponibles` | Canal desconocido → `ValueError` con la lista de canales válidos |
+| A-05 | `test_crea_los_tres_miembros_de_la_familia` (x3) | Cada fábrica construye los tres notificadores con la interfaz común |
+| A-06 | `test_los_notificadores_no_son_las_clases_abstractas` (x3) | Los productos devueltos son subclases concretas, no las ABC |
+| A-07 | `test_todos_los_mensajes_salen_por_el_mismo_canal` (x3) | Los tres mensajes de un servicio llevan el mismo `canal` |
+| A-08 | `test_no_se_pueden_mezclar_canales_en_una_misma_familia` | Un servicio nunca emite un mensaje de un canal ajeno |
+| A-09 | `test_email_siempre_lleva_asunto_y_cuerpo_largo` | Toda la familia email lleva asunto y firma, sin `datos` |
+| A-10 | `test_sms_no_lleva_asunto_y_respeta_el_limite_de_160` | Toda la familia SMS: sin asunto y `len(cuerpo) <= 160` |
+| A-11 | `test_push_lleva_titulo_cuerpo_cortos_y_payload_estructurado` | Toda la familia push: título/cuerpo cortos + `datos["evento"]` |
+| A-12 | `test_sms_recorta_los_textos_muy_largos` | El recorte del canal SMS se aplica aunque el texto sea enorme |
+| A-13 | `test_construye_la_familia_una_sola_vez` | `ServicioNotificaciones` reutiliza los notificadores entre llamadas |
+| A-14 | `test_transaccion_distingue_comprador_de_vendedor` | El notificador redacta según el `rol` del destinatario |
+| A-15 | `test_alerta_iot_incluye_el_dispositivo_y_los_valores` | El payload de la alerta lleva `dispositivo_id`, `lectura`, `umbral` |
+| A-16 | `test_reporte_expone_el_balance_en_el_payload` | El payload del reporte lleva `balance_kwh` y `transacciones` |
+| A-17 | `test_se_puede_agregar_un_canal_sin_modificar_los_existentes` | Un `CanalWebhook` nuevo funciona con `ServicioNotificaciones` sin tocar nada (abierto/cerrado) |

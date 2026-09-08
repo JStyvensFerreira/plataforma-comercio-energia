@@ -1,6 +1,6 @@
 @echo off
-REM Validador de las pruebas de los patrones SINGLETON y FACTORY METHOD.
-REM Doble clic o: validar_pruebas.bat [singleton^|factory] [-v]
+REM Validador de las pruebas de los patrones SINGLETON, FACTORY METHOD y ABSTRACT FACTORY.
+REM Doble clic o: validar_pruebas.bat [singleton^|factory^|abstract] [-v]
 
 cd /d "%~dp0"
 python validar_pruebas.py %*

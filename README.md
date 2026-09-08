@@ -5,21 +5,25 @@ La Plataforma de Comercio de Energía es un sistema digital diseñado para facil
 La plataforma contempla funcionalidades como el registro de usuarios, publicación de ofertas, participación en subastas, monitoreo del consumo y la producción, integración con dispositivos IoT y análisis predictivo. El sistema está planteado con una arquitectura modular y escalable, que puede ampliarse posteriormente con pagos electrónicos, aplicaciones móviles, integración con empresas distribuidoras y tecnologías como blockchain..
 
 
-## Patrones de diseño (`src/`)
+## Patrones de diseño (`Patrones/`)
 
-Todo el código de los patrones de diseño aplicados está bajo `src/`, con una
+Todo el código de los patrones de diseño aplicados está bajo `Patrones/`, con una
 carpeta por patrón que contiene su implementación y sus pruebas:
 
 ```
-src/
+Patrones/
 ├── README.md                       # documento de pruebas (casos por patrón)
 ├── singleton/
 │   ├── plataforma_energia.py       # implementación del patrón Singleton
 │   ├── test_singleton.py           # pruebas del patrón
 │   └── conftest.py
-└── factory_method/
-    ├── factory_method.py           # implementación del patrón Factory Method
-    ├── test_factory_method.py      # pruebas del patrón
+├── factory_method/
+│   ├── factory_method.py           # implementación del patrón Factory Method
+│   ├── test_factory_method.py      # pruebas del patrón
+│   └── conftest.py
+└── abstract_factory/
+    ├── abstract_factory.py         # implementación del patrón Abstract Factory
+    ├── test_abstract_factory.py    # pruebas del patrón
     └── conftest.py
 ```
 
@@ -29,7 +33,7 @@ python -m pytest              # ejecuta todas las pruebas de los patrones
 python validar_pruebas.py     # resumen por patrón (o validar_pruebas.bat en Windows)
 ```
 
-Ver [`src/README.md`](src/README.md) para el detalle de cada caso de prueba.
+Ver [`Patrones/README.md`](Patrones/README.md) para el detalle de cada caso de prueba.
 
 ## Estructura de la aplicación
 
