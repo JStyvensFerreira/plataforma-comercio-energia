@@ -7,6 +7,7 @@ Ejecutar con:
 """
 
 import os
+import re
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -16,7 +17,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
+from notificaciones import CANALES_DISPONIBLES
 from plataforma import PlataformaEnergia
+from reportes import FORMATOS_DISPONIBLES
 
 app = FastAPI(title="Plataforma de Comercio de Energía", version="1.0.0")
 
@@ -45,6 +48,9 @@ class RegistroIn(BaseModel):
     id: str
     nombre: str
     password: str
+    canal_notificacion: str = "email"  # "email" | "sms" | "push"
+    email: str = ""
+    telefono: str = ""
 
 
 class LoginIn(BaseModel):
@@ -60,10 +66,39 @@ class OrdenIn(BaseModel):
 class DispositivoIn(BaseModel):
     id: str
     tipo: str
+    umbral_min: float | None = None
+    umbral_max: float | None = None
 
 
 class LecturaIn(BaseModel):
     valor_kwh: float
+
+
+class CanalIn(BaseModel):
+    canal: str
+
+
+class ContactoIn(BaseModel):
+    email: str | None = None
+    telefono: str | None = None
+
+
+# ---------- Validación de datos de contacto ----------
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def validar_contacto(email: str | None, telefono: str | None) -> tuple[str | None, str | None]:
+    """Normaliza y valida correo/teléfono. Cadena vacía = borrar el dato."""
+    if email:
+        email = email.strip()
+        if not _EMAIL_RE.match(email):
+            raise HTTPException(400, f"Correo inválido: {email}")
+    if telefono:
+        telefono = telefono.strip()
+        solo_digitos = re.sub(r"[\s()+-]", "", telefono)
+        if not solo_digitos.isdigit() or not 7 <= len(solo_digitos) <= 15:
+            raise HTTPException(400, f"Teléfono inválido: {telefono}")
+    return email, telefono
 
 
 # ---------- Autenticación ----------
@@ -89,8 +124,14 @@ def usuario_actual(token: str | None = Depends(oauth2_scheme)) -> str:
 def registro(datos: RegistroIn):
     if datos.id in plataforma.usuarios:
         raise HTTPException(400, "El usuario ya existe")
+    if datos.canal_notificacion not in CANALES_DISPONIBLES:
+        raise HTTPException(400, f"Canal inválido. Disponibles: {', '.join(CANALES_DISPONIBLES)}")
+    email, telefono = validar_contacto(datos.email, datos.telefono)
     password_hash = bcrypt.hashpw(datos.password.encode(), bcrypt.gensalt()).decode()
-    usuario = plataforma.registrar_usuario(datos.id, datos.nombre, password_hash)
+    usuario = plataforma.registrar_usuario(
+        datos.id, datos.nombre, password_hash, datos.canal_notificacion,
+        email or "", telefono or "",
+    )
     return {"access_token": crear_token(usuario.id), "token_type": "bearer", "usuario": usuario.to_dict()}
 
 
@@ -145,7 +186,9 @@ def listar_transacciones():
 
 @app.post("/iot/dispositivos")
 def crear_dispositivo(d: DispositivoIn, usuario_id: str = Depends(usuario_actual)):
-    return plataforma.conectar_dispositivo(d.id, usuario_id, d.tipo).to_dict()
+    return plataforma.conectar_dispositivo(
+        d.id, usuario_id, d.tipo, d.umbral_min, d.umbral_max
+    ).to_dict()
 
 
 @app.get("/iot/dispositivos")
@@ -183,6 +226,54 @@ def prediccion(dispositivo_id: str, ventana: int = 3):
         raise HTTPException(404, "Dispositivo no encontrado")
     valor = plataforma.predecir_siguiente_valor(dispositivo_id, ventana)
     return {"prediccion_kwh": valor}
+
+
+# ---------- Notificaciones (patrón Abstract Factory) ----------
+@app.get("/notificaciones/canales")
+def listar_canales():
+    """Canales de notificación soportados (una fábrica abstracta por canal)."""
+    return {"canales": list(CANALES_DISPONIBLES)}
+
+
+@app.get("/notificaciones")
+def mis_notificaciones(usuario_id: str = Depends(usuario_actual)):
+    """Bandeja del usuario autenticado: cada mensaje ya viene con el formato de su canal."""
+    return plataforma.bandeja_notificaciones(usuario_id)
+
+
+@app.put("/usuarios/me/canal")
+def cambiar_canal(datos: CanalIn, usuario_id: str = Depends(usuario_actual)):
+    if datos.canal not in CANALES_DISPONIBLES:
+        raise HTTPException(400, f"Canal inválido. Disponibles: {', '.join(CANALES_DISPONIBLES)}")
+    return plataforma.cambiar_canal_notificacion(usuario_id, datos.canal).to_dict()
+
+
+@app.put("/usuarios/me/contacto")
+def actualizar_contacto(datos: ContactoIn, usuario_id: str = Depends(usuario_actual)):
+    """Ajusta el correo y/o teléfono a los que salen las notificaciones del usuario."""
+    email, telefono = validar_contacto(datos.email, datos.telefono)
+    usuario = plataforma.actualizar_contacto(usuario_id, email, telefono)
+    return usuario.to_dict()
+
+
+# ---------- Reporte energético (patrón Builder) ----------
+@app.get("/reportes/formatos")
+def listar_formatos_reporte():
+    """Formatos de reporte soportados (un builder concreto por formato)."""
+    return {"formatos": list(FORMATOS_DISPONIBLES)}
+
+
+@app.post("/reportes/generar")
+def generar_reporte(formato: str = "detallado", usuario_id: str = Depends(usuario_actual)):
+    """
+    Construye el reporte energético del usuario paso a paso (patrón Builder) en
+    el formato pedido y deja el resumen en su bandeja, por su canal.
+    """
+    if formato not in FORMATOS_DISPONIBLES:
+        raise HTTPException(
+            400, f"Formato inválido. Disponibles: {', '.join(FORMATOS_DISPONIBLES)}"
+        )
+    return plataforma.generar_reporte(usuario_id, formato)
 
 
 @app.get("/estado")

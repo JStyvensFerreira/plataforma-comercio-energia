@@ -173,6 +173,19 @@
       <label v-if="authMode === 'registro'">Nombre</label>
       <input v-if="authMode === 'registro'" v-model="authForm.nombre" placeholder="Ana" />
 
+      <label v-if="authMode === 'registro'">Canal de notificación</label>
+      <select v-if="authMode === 'registro'" v-model="authForm.canal_notificacion">
+        <option value="email">Email</option>
+        <option value="sms">SMS</option>
+        <option value="push">Push</option>
+      </select>
+
+      <label v-if="authMode === 'registro'">Correo (destino de notificaciones email)</label>
+      <input v-if="authMode === 'registro'" v-model="authForm.email" type="email" placeholder="tucorreo@ejemplo.com" />
+
+      <label v-if="authMode === 'registro'">Teléfono (destino de notificaciones SMS)</label>
+      <input v-if="authMode === 'registro'" v-model="authForm.telefono" placeholder="3001234567" />
+
       <label>Contraseña</label>
       <input v-model="authForm.password" type="password" placeholder="••••••••" @keyup.enter="enviarAuth" />
 
@@ -199,6 +212,7 @@
     <button :class="{active: tab==='usuarios'}" @click="tab='usuarios'">Usuarios</button>
     <button :class="{active: tab==='iot'}" @click="tab='iot'">IoT &amp; Predicción</button>
     <button :class="{active: tab==='historial'}" @click="tab='historial'">Historial</button>
+    <button :class="{active: tab==='notificaciones'}" @click="tab='notificaciones'; cargarNotificaciones()">Notificaciones</button>
   </nav>
 
   <main v-if="usuarioActual">
@@ -344,6 +358,86 @@
       </div>
     </section>
 
+    <!-- NOTIFICACIONES (patrón Abstract Factory) -->
+    <section v-if="tab==='notificaciones'">
+      <div class="grid cols-2" style="margin-bottom:18px;">
+        <div class="card">
+          <h3>Tu canal de notificación</h3>
+          <div class="helper" style="margin-bottom:8px;">
+            La plataforma elige la <b>fábrica abstracta</b> según este canal: todos tus
+            avisos (subasta, alertas IoT, reportes) salen con su formato.
+          </div>
+          <select v-model="canalNotificacion">
+            <option value="email">Email — con asunto y cuerpo largo</option>
+            <option value="sms">SMS — sin asunto, máx. 160 caracteres</option>
+            <option value="push">Push — título/cuerpo cortos + payload</option>
+          </select>
+          <button class="btn" @click="cambiarCanal">Guardar canal</button>
+        </div>
+        <div class="card">
+          <h3>Generar reporte <span class="badge">Builder</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            El reporte se construye <b>paso a paso</b>; el <b>formato</b> elige qué
+            <i>builder</i> arma el resultado. El resumen siempre se deja en la bandeja por tu canal.
+          </div>
+          <select v-model="formatoReporte">
+            <option value="detallado">Detallado — objeto con secciones</option>
+            <option value="resumen">Resumen — dict plano (contrato del canal)</option>
+            <option value="texto">Texto — cadena formateada</option>
+          </select>
+          <button class="btn secondary" @click="generarReporte">Generar reporte ahora</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;" v-if="reporteGenerado !== null">
+        <h3>Último reporte generado <span class="badge">{{ reporteFormato }}</span></h3>
+        <pre v-if="typeof reporteGenerado === 'string'"
+             style="white-space:pre-wrap; font-size:13px;">{{ reporteGenerado }}</pre>
+        <div v-else-if="reporteGenerado.secciones">
+          <div class="helper" style="margin-bottom:8px;">
+            Generado: {{ reporteGenerado.generado_en }} · usuario {{ reporteGenerado.usuario }} · período {{ reporteGenerado.periodo }}
+          </div>
+          <div v-for="(s, i) in reporteGenerado.secciones" :key="i" style="margin-bottom:10px;">
+            <b>{{ s.titulo }}</b>
+            <ul style="margin:4px 0 0 18px;">
+              <li v-for="(l, j) in s.lineas" :key="j" style="white-space:pre-line;">{{ l }}</li>
+            </ul>
+          </div>
+        </div>
+        <pre v-else style="white-space:pre-wrap; font-size:13px;">{{ JSON.stringify(reporteGenerado, null, 2) }}</pre>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <h3>Datos de contacto</h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Destino real de cada aviso: el <b>correo</b> se usa cuando tu canal es Email,
+          el <b>teléfono</b> cuando es SMS. Aparecen en la columna «Destino» de la bandeja.
+        </div>
+        <label>Correo</label>
+        <input v-model="contacto.email" type="email" placeholder="tucorreo@ejemplo.com" />
+        <label>Teléfono</label>
+        <input v-model="contacto.telefono" placeholder="3001234567" />
+        <button class="btn" @click="guardarContacto">Guardar contacto</button>
+      </div>
+
+      <div class="card">
+        <h3>Bandeja ({{ notificaciones.length }})</h3>
+        <table>
+          <thead><tr><th>Canal</th><th>Destino</th><th>Asunto</th><th>Cuerpo</th><th>Payload</th></tr></thead>
+          <tbody>
+            <tr v-for="(n, i) in [...notificaciones].reverse()" :key="i">
+              <td><span class="badge">{{ n.canal }}</span></td>
+              <td class="mono helper">{{ n.destino || '— (sin dato)' }}</td>
+              <td>{{ n.asunto || '—' }}</td>
+              <td style="white-space:pre-line; max-width:340px;">{{ n.cuerpo }}</td>
+              <td class="mono helper">{{ Object.keys(n.datos || {}).length ? JSON.stringify(n.datos) : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-if="!notificaciones.length">Sin notificaciones todavía. Ejecuta una subasta o envía una lectura IoT fuera de rango.</div>
+      </div>
+    </section>
+
   </main>
 
   <div class="toast" :class="{error: toast.error}" v-if="toast.msg">{{ toast.msg }}</div>
@@ -362,7 +456,7 @@ createApp({
       token: localStorage.getItem('voltia_token') || null,
       usuarioActual: JSON.parse(localStorage.getItem('voltia_usuario') || 'null'),
       authMode: 'login',
-      authForm: { id: '', nombre: '', password: '' },
+      authForm: { id: '', nombre: '', password: '', canal_notificacion: 'email', email: '', telefono: '' },
       authError: '',
       usuarios: [],
       dispositivos: [],
@@ -374,6 +468,12 @@ createApp({
       dispositivoSeleccionado: '',
       lecturasActuales: [],
       prediccion: null,
+      notificaciones: [],
+      canalNotificacion: 'email',
+      formatoReporte: 'detallado',
+      reporteGenerado: null,
+      reporteFormato: '',
+      contacto: { email: '', telefono: '' },
       toast: { msg: '', error: false },
     }
   },
@@ -409,6 +509,11 @@ createApp({
     guardarSesion(data){
       this.token = data.access_token;
       this.usuarioActual = data.usuario;
+      this.canalNotificacion = data.usuario.canal_notificacion || 'email';
+      this.contacto = {
+        email: data.usuario.email || '',
+        telefono: data.usuario.telefono || '',
+      };
       localStorage.setItem('voltia_token', this.token);
       localStorage.setItem('voltia_usuario', JSON.stringify(this.usuarioActual));
     },
@@ -423,7 +528,7 @@ createApp({
       const ruta = this.authMode === 'login' ? '/auth/login' : '/auth/registro';
       const cuerpo = this.authMode === 'login'
         ? { id: this.authForm.id, password: this.authForm.password }
-        : { id: this.authForm.id, nombre: this.authForm.nombre, password: this.authForm.password };
+        : { id: this.authForm.id, nombre: this.authForm.nombre, password: this.authForm.password, canal_notificacion: this.authForm.canal_notificacion, email: this.authForm.email, telefono: this.authForm.telefono };
       try{
         const r = await fetch(this.apiBase + ruta, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -432,7 +537,7 @@ createApp({
         const data = await r.json();
         if(!r.ok) throw new Error(data.detail || 'No se pudo autenticar');
         this.guardarSesion(data);
-        this.authForm = { id: '', nombre: '', password: '' };
+        this.authForm = { id: '', nombre: '', password: '', canal_notificacion: 'email', email: '', telefono: '' };
         this.refrescarTodo();
       }catch(e){ this.authError = e.message; }
     },
@@ -448,7 +553,55 @@ createApp({
       return r;
     },
     async refrescarTodo(){
-      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones()]);
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones()]);
+    },
+    async cargarNotificaciones(){
+      if(!this.token) return;
+      try{
+        const r = await this.peticionProtegida('/notificaciones');
+        if(r.ok) this.notificaciones = await r.json();
+      }catch(e){}
+    },
+    async cambiarCanal(){
+      try{
+        const r = await this.peticionProtegida('/usuarios/me/canal', {
+          method:'PUT', body: JSON.stringify({ canal: this.canalNotificacion })
+        });
+        if(!r.ok) throw new Error();
+        const u = await r.json();
+        this.usuarioActual = u;
+        localStorage.setItem('voltia_usuario', JSON.stringify(u));
+        this.mostrarToast('Canal actualizado a ' + u.canal_notificacion);
+      }catch(e){ this.mostrarToast('Error al cambiar el canal', true); }
+    },
+    async guardarContacto(){
+      try{
+        const r = await this.peticionProtegida('/usuarios/me/contacto', {
+          method:'PUT',
+          body: JSON.stringify({ email: this.contacto.email, telefono: this.contacto.telefono })
+        });
+        const u = await r.json();
+        if(!r.ok) throw new Error(u.detail || 'Datos inválidos');
+        this.usuarioActual = u;
+        this.contacto = { email: u.email || '', telefono: u.telefono || '' };
+        localStorage.setItem('voltia_usuario', JSON.stringify(u));
+        this.mostrarToast('Contacto actualizado');
+        this.cargarNotificaciones();
+      }catch(e){ this.mostrarToast(e.message || 'Error al guardar el contacto', true); }
+    },
+    async generarReporte(){
+      try{
+        const r = await this.peticionProtegida(
+          '/reportes/generar?formato=' + encodeURIComponent(this.formatoReporte),
+          { method:'POST' }
+        );
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || '');
+        this.reporteGenerado = data.reporte;
+        this.reporteFormato = data.formato;
+        this.mostrarToast('Reporte generado (' + data.formato + ')');
+        this.cargarNotificaciones();
+      }catch(e){ this.mostrarToast(e.message || 'Error al generar el reporte', true); }
     },
     async cargarUsuarios(){
       try{ this.usuarios = await (await fetch(this.apiBase + '/usuarios')).json(); }catch(e){}
@@ -487,7 +640,7 @@ createApp({
         const r = await fetch(this.apiBase + '/subasta/ejecutar', { method:'POST' });
         const nuevas = await r.json();
         this.mostrarToast(nuevas.length ? `Subasta ejecutada: ${nuevas.length} transacción(es)` : 'Subasta ejecutada: sin cruces posibles');
-        await Promise.all([this.cargarOrdenes(), this.cargarTransacciones()]);
+        await Promise.all([this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones()]);
       }catch(e){ this.mostrarToast('Error al ejecutar la subasta', true); }
     },
     async crearDispositivo(){
@@ -507,6 +660,7 @@ createApp({
         const data = await r.json();
         this.lecturasActuales = data.lecturas;
         this.mostrarToast('5 lecturas simuladas para ' + this.dispositivoSeleccionado);
+        this.cargarNotificaciones();
       }catch(e){ this.mostrarToast('Error al simular lecturas', true); }
     },
     async obtenerPrediccion(){

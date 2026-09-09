@@ -21,9 +21,13 @@ Patrones/
 │   ├── factory_method.py           # implementación del patrón Factory Method
 │   ├── test_factory_method.py      # pruebas del patrón
 │   └── conftest.py
-└── abstract_factory/
-    ├── abstract_factory.py         # implementación del patrón Abstract Factory
-    ├── test_abstract_factory.py    # pruebas del patrón
+├── abstract_factory/
+│   ├── abstract_factory.py         # implementación del patrón Abstract Factory
+│   ├── test_abstract_factory.py    # pruebas del patrón
+│   └── conftest.py
+└── builder/
+    ├── builder.py                  # implementación del patrón Builder
+    ├── test_builder.py             # pruebas del patrón
     └── conftest.py
 ```
 

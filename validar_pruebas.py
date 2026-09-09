@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """
-Validador de las pruebas de los patrones SINGLETON, FACTORY METHOD y ABSTRACT FACTORY.
+Validador de las pruebas de los patrones SINGLETON, FACTORY METHOD,
+ABSTRACT FACTORY y BUILDER.
 
 Ejecuta la batería de pruebas de:
     - Patrones/singleton/test_singleton.py                  (patrón Singleton)
     - Patrones/factory_method/test_factory_method.py        (patrón Factory Method)
     - Patrones/abstract_factory/test_abstract_factory.py    (patrón Abstract Factory)
+    - Patrones/builder/test_builder.py                      (patrón Builder)
 
 y muestra un resumen claro con el resultado de cada patrón.
 
 Uso:
-    python validar_pruebas.py            # ejecuta los tres patrones
+    python validar_pruebas.py            # ejecuta los cuatro patrones
     python validar_pruebas.py singleton  # solo Singleton
     python validar_pruebas.py factory    # solo Factory Method
     python validar_pruebas.py abstract   # solo Abstract Factory
+    python validar_pruebas.py builder    # solo Builder
     python validar_pruebas.py -v         # salida detallada de pytest
 """
 
@@ -37,6 +40,10 @@ SUITES = {
     "abstract": {
         "titulo": "Patron ABSTRACT FACTORY",
         "archivo": RAIZ / "Patrones" / "abstract_factory" / "test_abstract_factory.py",
+    },
+    "builder": {
+        "titulo": "Patron BUILDER",
+        "archivo": RAIZ / "Patrones" / "builder" / "test_builder.py",
     },
 }
 
@@ -90,6 +97,8 @@ def main(argv: list[str]) -> int:
                 claves.append("factory")
             elif arg.startswith("abstract") or arg.startswith("abstracta"):
                 claves.append("abstract")
+            elif arg.startswith("builder") or arg.startswith("constructor"):
+                claves.append("builder")
             else:
                 print(f"Argumento no reconocido: {arg}")
                 print(__doc__)

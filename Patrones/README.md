@@ -16,9 +16,13 @@ Patrones/
 │   ├── factory_method.py           # código del patrón
 │   ├── test_factory_method.py      # pruebas del patrón
 │   └── conftest.py
-└── abstract_factory/
-    ├── abstract_factory.py         # código del patrón
-    ├── test_abstract_factory.py    # pruebas del patrón
+├── abstract_factory/
+│   ├── abstract_factory.py         # código del patrón
+│   ├── test_abstract_factory.py    # pruebas del patrón
+│   └── conftest.py
+└── builder/
+    ├── builder.py                  # código del patrón
+    ├── test_builder.py             # pruebas del patrón
     └── conftest.py
 ```
 
@@ -27,6 +31,7 @@ Patrones/
 | Singleton | [`plataforma_energia.py`](singleton/plataforma_energia.py) | [`test_singleton.py`](singleton/test_singleton.py) |
 | Factory Method | [`factory_method.py`](factory_method/factory_method.py) | [`test_factory_method.py`](factory_method/test_factory_method.py) |
 | Abstract Factory | [`abstract_factory.py`](abstract_factory/abstract_factory.py) | [`test_abstract_factory.py`](abstract_factory/test_abstract_factory.py) |
+| Builder | [`builder.py`](builder/builder.py) | [`test_builder.py`](builder/test_builder.py) |
 
 ## Cómo ejecutar
 
@@ -54,11 +59,12 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Patrones\abstract_factory\test_abstract_factory.py ...........................  [ 44%]
-Patrones\factory_method\test_factory_method.py ................                [ 70%]
+Patrones\abstract_factory\test_abstract_factory.py ...........................  [ 29%]
+Patrones\builder\test_builder.py ..............................                [ 62%]
+Patrones\factory_method\test_factory_method.py ................                [ 80%]
 Patrones\singleton\test_singleton.py ..................                        [100%]
 
-61 passed
+91 passed
 ```
 
 ---
@@ -136,3 +142,38 @@ entre sí, y agregar un canal nuevo no obliga a modificar el código existente.
 | A-15 | `test_alerta_iot_incluye_el_dispositivo_y_los_valores` | El payload de la alerta lleva `dispositivo_id`, `lectura`, `umbral` |
 | A-16 | `test_reporte_expone_el_balance_en_el_payload` | El payload del reporte lleva `balance_kwh` y `transacciones` |
 | A-17 | `test_se_puede_agregar_un_canal_sin_modificar_los_existentes` | Un `CanalWebhook` nuevo funciona con `ServicioNotificaciones` sin tocar nada (abierto/cerrado) |
+
+## Casos de prueba — Builder
+
+Verifica que el reporte energético se construye **paso a paso** mediante un
+builder, que el mismo proceso de construcción produce **representaciones
+distintas** (`dict`, objeto con secciones, `str`), que el `DirectorReportes`
+encapsula las recetas sin conocer la representación, y que agregar un formato
+nuevo no obliga a modificar el código existente.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| B-01 | `test_no_se_puede_instanciar_el_builder_abstracto` | `ReporteBuilder` abstracto → `TypeError` |
+| B-02 | `test_devuelve_el_builder_del_formato_correcto` (x3) | `crear_builder(formato)` retorna el builder esperado y su `formato` coincide |
+| B-03 | `test_registro_y_formatos_disponibles_coinciden` | `FORMATOS_DISPONIBLES` refleja el registro de builders |
+| B-04 | `test_formato_no_soportado_lanza_value_error_con_los_disponibles` | Formato desconocido → `ValueError` con la lista de formatos válidos |
+| B-05 | `test_reporte_completo_llama_todos_los_pasos_en_orden` | El Director llama `reiniciar` + los 6 pasos en el orden de la receta |
+| B-06 | `test_reporte_ejecutivo_omite_desglose_y_prediccion` | La receta ejecutiva no invoca `desglose_dispositivos` ni `prediccion_consumo` |
+| B-07 | `test_el_director_reinicia_el_builder_al_empezar_cada_receta` | Cada receta arranca con `reiniciar()`; dos recetas seguidas → 2 `reiniciar` |
+| B-08 | `test_obtener_reporte_devuelve_el_tipo_propio_del_builder` (x3) | `resumen`→`dict`, `detallado`→`ReporteEnergetico`, `texto`→`str` |
+| B-09 | `test_resumen_es_un_dict_plano_con_el_contrato_de_notificacion` | El `dict` del resumen expone `CLAVES_CONTRATO_NOTIFICACION` con tipos numéricos |
+| B-10 | `test_detallado_es_un_objeto_con_secciones_tipadas` | `ReporteEnergetico` con secciones tituladas y sello `generado_en` |
+| B-11 | `test_texto_es_una_cadena_no_vacia_con_los_datos_clave` | El `str` incluye el usuario y el balance calculado |
+| B-12 | `test_dos_reportes_seguidos_no_se_contaminan` | `reiniciar` aísla dos reportes consecutivos del mismo builder |
+| B-13 | `test_reiniciar_explicito_vacia_el_reporte_en_construccion` | `reiniciar()` deja el builder sin secciones ni encabezado |
+| B-14 | `test_reporte_completo_incluye_las_secciones_en_orden` | Orden: Balance → Desglose → Historial → Predicción |
+| B-15 | `test_reporte_ejecutivo_no_incluye_desglose_ni_prediccion` | Ejecutivo = Balance + Historial únicamente |
+| B-16 | `test_reporte_para_factura_lleva_historial_y_balance_sin_prediccion` | Factura = Historial + Balance |
+| B-17 | `test_una_misma_receta_sirve_para_todas_las_representaciones` (x3) | `reporte_para_factura` funciona con los tres builders |
+| B-18 | `test_el_balance_es_produccion_menos_consumo` | `balance_kwh == produccion - consumo` en el resumen y en la sección detallada |
+| B-19 | `test_el_resumen_cuenta_las_operaciones` | `transacciones` = número de filas del historial |
+| B-20 | `test_el_desglose_separa_produccion_y_consumo_por_dispositivo` | El desglose separa kWh producidos y consumidos por dispositivo |
+| B-21 | `test_los_datos_vacios_no_rompen_ningun_builder` | Un `DatosReporte` vacío se construye en los tres formatos sin error |
+| B-22 | `test_cada_paso_devuelve_el_builder_para_encadenar` | Cada paso devuelve `self` (interfaz fluida) |
+| B-23 | `test_encadenado_a_mano_equivale_a_la_receta_del_director` | Encadenar los pasos a mano == `DirectorReportes.reporte_ejecutivo` |
+| B-24 | `test_se_puede_agregar_un_builder_sin_modificar_los_existentes` | Un `ReporteMarkdownBuilder` nuevo funciona con el `DirectorReportes` sin tocar nada (abierto/cerrado) |

@@ -6,6 +6,7 @@ Implementación del patrón **Abstract Factory** (Fábrica Abstracta) sobre los
 - Código del patrón (con demo y docstring explicativo): [`Patrones/abstract_factory/abstract_factory.py`](Patrones/abstract_factory/abstract_factory.py)
 - Pruebas del patrón: [`Patrones/abstract_factory/test_abstract_factory.py`](Patrones/abstract_factory/test_abstract_factory.py)
 - Documento de casos de prueba: [`Patrones/README.md`](Patrones/README.md#casos-de-prueba--abstract-factory)
+- Uso real en la aplicación: [`plataforma-energia-app/backend/notificaciones.py`](plataforma-energia-app/backend/notificaciones.py) — consumido por [`plataforma.py`](plataforma-energia-app/backend/plataforma.py) (`_servicio_notificaciones`) y expuesto en [`main.py`](plataforma-energia-app/backend/main.py) (`/notificaciones`, `/usuarios/me/canal`, `/reportes/generar`)
 
 ## Por qué este patrón aquí
 

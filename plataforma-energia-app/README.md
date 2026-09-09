@@ -1,18 +1,26 @@
 # Voltia — Plataforma de Comercio de Energía (Backend + Frontend)
 
-Implementación full-stack del proyecto #16, sobre la base del patrón **Singleton**
-ya usado en `plataforma_energia.py`.
+Implementación full-stack del proyecto #16. Usa dos patrones de diseño de forma
+real:
+
+- **Singleton** (`plataforma.py`) — estado único compartido por todas las peticiones.
+- **Abstract Factory** (`notificaciones.py`) — un canal de notificación (email /
+  SMS / push) es una fábrica que crea la familia completa de avisos de ese canal.
+- **Builder** (`reportes.py`) — el reporte energético se construye paso a paso, y
+  el mismo proceso produce distintas representaciones (dict, objeto, texto).
 
 ## Estructura
 
 ```
 plataforma-energia-app/
 ├── backend/
-│   ├── plataforma.py     # Lógica de dominio (Singleton PlataformaEnergia)
-│   ├── main.py            # API FastAPI que expone el Singleton
+│   ├── plataforma.py       # Lógica de dominio (Singleton PlataformaEnergia)
+│   ├── notificaciones.py    # Canales de notificación (Abstract Factory)
+│   ├── reportes.py          # Construcción del reporte energético (Builder)
+│   ├── main.py              # API FastAPI que expone los patrones
 │   └── requirements.txt
 └── frontend/
-    └── index.html         # Dashboard en Vue 3 (sin build, vía CDN)
+    └── index.html           # Dashboard en Vue 3 (sin build, vía CDN)
 ```
 
 ## 1. Levantar el backend (FastAPI)
@@ -41,11 +49,45 @@ Al abrirlo, confirma que el campo de la API (arriba a la derecha) diga
 
 ## 3. Flujo de prueba sugerido
 
-1. **Login** → regístrate como `u1` / Ana con una contraseña, luego cierra sesión y regístrate como `u2` / Luis
+1. **Login** → regístrate como `u1` / Ana eligiendo canal **push**, luego cierra sesión y regístrate como `u2` / Luis con canal **sms**
 2. **Mercado** → con la sesión de Ana publica una venta (10 kWh a $0.15); cambia de sesión a Luis y publica una compra (6 kWh a $0.18)
 3. Haz clic en **"Ejecutar subasta"** → se genera una transacción
-4. **IoT & Predicción** → conecta un panel solar (queda ligado al usuario con sesión activa), simula lecturas y pide la predicción
-5. **Historial** → revisa las transacciones cerradas
+4. **Notificaciones** → cada usuario ve el aviso de la operación **con el formato de su canal** (Ana un push con payload, Luis un SMS ≤ 160). Cambia tu canal y genera un reporte para verlo.
+5. **IoT & Predicción** → conecta un panel solar, simula lecturas; si alguna cae fuera del rango normal del dispositivo, llega una **alerta IoT** por tu canal.
+6. **Historial** → revisa las transacciones cerradas
+
+## Por qué el Abstract Factory aquí
+
+La plataforma avisa en tres momentos distintos —cierre de subasta, alerta de una
+lectura IoT fuera de rango y reporte periódico— y cada usuario elige su canal
+(`canal_notificacion`). En `plataforma.py`, `_servicio_notificaciones(usuario_id)`
+llama a `crear_servicio(canal)` (en `notificaciones.py`): esa **fábrica abstracta**
+construye la familia completa de notificadores de ese canal, todos coherentes
+entre sí (el SMS nunca lleva asunto ni pasa de 160 caracteres; el push siempre
+lleva `payload`). El resto del código no conoce ninguna clase concreta de
+notificador, y añadir WhatsApp o Telegram sería solo una fábrica más.
+
+Endpoints que lo exponen: `GET /notificaciones`, `GET /notificaciones/canales`,
+`PUT /usuarios/me/canal`, `POST /reportes/generar`.
+
+## Por qué el Builder aquí
+
+El reporte energético (`POST /reportes/generar`) es un objeto con varias partes
+opcionales —balance, desglose por dispositivo, historial de operaciones,
+predicción— y que se necesita en varias representaciones. En `plataforma.py`,
+`_recolectar_datos_reporte(usuario_id)` arma un `DatosReporte` con la materia
+prima, y `DirectorReportes` (en `reportes.py`) lo construye **paso a paso** con
+el builder del formato pedido:
+
+- `formato=resumen` → `dict` plano; es justo el que consume el
+  `FormateadorReporte` del Abstract Factory, así que el aviso sigue saliendo por
+  el canal del usuario sin código de adaptación.
+- `formato=detallado` → objeto con secciones tipadas (lo que muestra el panel).
+- `formato=texto` → cadena lista para un correo o un `.txt`.
+
+Agregar un formato (Markdown, PDF) es un builder concreto más, sin tocar el
+Director ni los demás. Endpoints: `POST /reportes/generar?formato=…`,
+`GET /reportes/formatos`.
 
 ## Autenticación
 
