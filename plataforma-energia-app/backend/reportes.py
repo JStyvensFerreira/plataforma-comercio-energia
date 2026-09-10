@@ -3,7 +3,7 @@ Plataforma de Comercio de Energía — construcción del reporte energético
 (patrón Builder). Este módulo es consumido por plataforma.py / main.py.
 
 Es la versión de la aplicación del patrón documentado en
-`Patrones/Semana 4/builder/builder.py`. El reporte energético de un usuario se construye
+`Patrones/Semana 4/builder.py`. El reporte energético de un usuario se construye
 PASO A PASO con un `ReporteBuilder`, y el mismo proceso de construcción produce
 representaciones distintas:
 

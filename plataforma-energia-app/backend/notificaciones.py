@@ -3,7 +3,7 @@ Plataforma de Comercio de Energía — canales de notificación (patrón Abstrac
 Este módulo es consumido por plataforma.py / main.py (API FastAPI).
 
 Es la versión de la aplicación del patrón documentado en
-`Patrones/Semana 3/abstract_factory/abstract_factory.py`. Cada canal (email, SMS, push)
+`Patrones/Semana 3/abstract_factory.py`. Cada canal (email, SMS, push)
 es una FÁBRICA ABSTRACTA que crea la familia completa de notificadores de ese
 canal, todos coherentes entre sí:
 

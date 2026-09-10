@@ -7,8 +7,8 @@ operaciones en la subasta y la predicción de la próxima lectura.
 
 - Código del patrón (con demo y docstring explicativo): [`builder.py`](builder.py)
 - Pruebas del patrón: [`test_builder.py`](test_builder.py)
-- Documento de casos de prueba: [`Patrones/README.md`](../../README.md#casos-de-prueba--builder)
-- Uso real en la aplicación: [`plataforma-energia-app/backend/reportes.py`](../../../plataforma-energia-app/backend/reportes.py) — consumido por [`plataforma.py`](../../../plataforma-energia-app/backend/plataforma.py) (`generar_reporte`) y expuesto en [`main.py`](../../../plataforma-energia-app/backend/main.py) (`POST /reportes/generar`)
+- Documento de casos de prueba: [`Patrones/README.md`](../README.md#casos-de-prueba--builder)
+- Uso real en la aplicación: [`plataforma-energia-app/backend/reportes.py`](../../plataforma-energia-app/backend/reportes.py) — consumido por [`plataforma.py`](../../plataforma-energia-app/backend/plataforma.py) (`generar_reporte`) y expuesto en [`main.py`](../../plataforma-energia-app/backend/main.py) (`POST /reportes/generar`)
 
 ## Por qué este patrón aquí
 
@@ -108,7 +108,8 @@ DirectorReportes(crear_builder("texto")).reporte_para_factura(datos)   # -> str
 ## Validación del patrón
 
 ```bash
-python -m pytest "Patrones/Semana 4/builder" -v        # 30 casos
-python validar_pruebas.py builder                      # resumen del patrón
-python "Patrones/Semana 4/builder/builder.py"          # demo por consola
+# desde la raíz del repositorio
+python -m pytest "Patrones/Semana 4/test_builder.py" -v   # 30 casos
+python validar_pruebas.py builder                         # resumen del patrón
+python "Patrones/Semana 4/builder.py"                    # demo por consola
 ```

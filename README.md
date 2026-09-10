@@ -7,23 +7,19 @@ La plataforma contempla funcionalidades como el registro de usuarios, publicaci�
 
 ## Patrones de diseño (`Patrones/`)
 
-El código de los patrones de diseño está bajo `Patrones/`, organizado por semana;
-cada patrón tiene su carpeta con su explicación (`Patron *.md`), su implementación
-y sus pruebas:
+El código de los patrones de diseño está bajo `Patrones/`, organizado por semana.
+Los archivos de cada patrón (explicación `Patron *.md`, código, pruebas) están
+directamente en la carpeta de su semana:
 
 ```
 Patrones/
-├── README.md                           # documento de pruebas (casos por patrón)
-├── Semana 2/
-│   └── singleton/                      # patrón Singleton
-├── Semana 3/
-│   ├── factory_method/                 # patrón Factory Method
-│   └── abstract_factory/               # patrón Abstract Factory
-└── Semana 4/
-    └── builder/                        # patrón Builder
+├── README.md          # documento de pruebas (casos por patrón)
+├── Semana 2/           # patrón Singleton
+├── Semana 3/           # patrones Factory Method y Abstract Factory
+└── Semana 4/           # patrón Builder
 ```
 
-El documento Word del proyecto está en [`Documentacion/`](Documentacion/).
+El documento Word y la contextualización están en [`Documentacion/`](Documentacion/).
 
 ```bash
 pip install -r requirements-dev.txt

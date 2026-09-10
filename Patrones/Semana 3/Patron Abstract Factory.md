@@ -5,8 +5,8 @@ Implementación del patrón **Abstract Factory** (Fábrica Abstracta) sobre los
 
 - Código del patrón (con demo y docstring explicativo): [`abstract_factory.py`](abstract_factory.py)
 - Pruebas del patrón: [`test_abstract_factory.py`](test_abstract_factory.py)
-- Documento de casos de prueba: [`Patrones/README.md`](../../README.md#casos-de-prueba--abstract-factory)
-- Uso real en la aplicación: [`plataforma-energia-app/backend/notificaciones.py`](../../../plataforma-energia-app/backend/notificaciones.py) — consumido por [`plataforma.py`](../../../plataforma-energia-app/backend/plataforma.py) (`_servicio_notificaciones`) y expuesto en [`main.py`](../../../plataforma-energia-app/backend/main.py) (`/notificaciones`, `/usuarios/me/canal`, `/reportes/generar`)
+- Documento de casos de prueba: [`Patrones/README.md`](../README.md#casos-de-prueba--abstract-factory)
+- Uso real en la aplicación: [`plataforma-energia-app/backend/notificaciones.py`](../../plataforma-energia-app/backend/notificaciones.py) — consumido por [`plataforma.py`](../../plataforma-energia-app/backend/plataforma.py) (`_servicio_notificaciones`) y expuesto en [`main.py`](../../plataforma-energia-app/backend/main.py) (`/notificaciones`, `/usuarios/me/canal`, `/reportes/generar`)
 
 ## Por qué este patrón aquí
 
@@ -93,7 +93,8 @@ servicio.enviar_reporte(resumen)
 ## Validación del patrón
 
 ```bash
-python -m pytest "Patrones/Semana 3/abstract_factory" -v      # 27 casos
-python validar_pruebas.py abstract                            # resumen del patrón
-python "Patrones/Semana 3/abstract_factory/abstract_factory.py"   # demo por consola
+# desde la raíz del repositorio
+python -m pytest "Patrones/Semana 3/test_abstract_factory.py" -v   # 27 casos
+python validar_pruebas.py abstract                                 # resumen del patrón
+python "Patrones/Semana 3/abstract_factory.py"                     # demo por consola
 ```
