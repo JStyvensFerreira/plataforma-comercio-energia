@@ -3,8 +3,8 @@
 Implementación del patrón **Abstract Factory** (Fábrica Abstracta) sobre los
 **canales de notificación** de la plataforma: correo, SMS y push a la app móvil.
 
-- Código del patrón (con demo y docstring explicativo): [`Patrones/abstract_factory/abstract_factory.py`](Patrones/abstract_factory/abstract_factory.py)
-- Pruebas del patrón: [`Patrones/abstract_factory/test_abstract_factory.py`](Patrones/abstract_factory/test_abstract_factory.py)
+- Código del patrón (con demo y docstring explicativo): [`Patrones/Semana 3/abstract_factory/abstract_factory.py`](Patrones/Semana%203/abstract_factory/abstract_factory.py)
+- Pruebas del patrón: [`Patrones/Semana 3/abstract_factory/test_abstract_factory.py`](Patrones/Semana%203/abstract_factory/test_abstract_factory.py)
 - Documento de casos de prueba: [`Patrones/README.md`](Patrones/README.md#casos-de-prueba--abstract-factory)
 - Uso real en la aplicación: [`plataforma-energia-app/backend/notificaciones.py`](plataforma-energia-app/backend/notificaciones.py) — consumido por [`plataforma.py`](plataforma-energia-app/backend/plataforma.py) (`_servicio_notificaciones`) y expuesto en [`main.py`](plataforma-energia-app/backend/main.py) (`/notificaciones`, `/usuarios/me/canal`, `/reportes/generar`)
 
@@ -93,7 +93,7 @@ servicio.enviar_reporte(resumen)
 ## Validación del patrón
 
 ```bash
-python -m pytest Patrones/abstract_factory -v      # 27 casos
-python validar_pruebas.py abstract                 # resumen del patrón
-python Patrones/abstract_factory/abstract_factory.py   # demo por consola
+python -m pytest "Patrones/Semana 3/abstract_factory" -v      # 27 casos
+python validar_pruebas.py abstract                            # resumen del patrón
+python "Patrones/Semana 3/abstract_factory/abstract_factory.py"   # demo por consola
 ```

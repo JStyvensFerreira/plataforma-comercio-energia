@@ -4,10 +4,10 @@ Validador de las pruebas de los patrones SINGLETON, FACTORY METHOD,
 ABSTRACT FACTORY y BUILDER.
 
 Ejecuta la batería de pruebas de:
-    - Patrones/singleton/test_singleton.py                  (patrón Singleton)
-    - Patrones/factory_method/test_factory_method.py        (patrón Factory Method)
-    - Patrones/abstract_factory/test_abstract_factory.py    (patrón Abstract Factory)
-    - Patrones/builder/test_builder.py                      (patrón Builder)
+    - Patrones/Semana 2/singleton/test_singleton.py                 (patrón Singleton)
+    - Patrones/Semana 3/factory_method/test_factory_method.py       (patrón Factory Method)
+    - Patrones/Semana 3/abstract_factory/test_abstract_factory.py   (patrón Abstract Factory)
+    - Patrones/Semana 4/builder/test_builder.py                     (patrón Builder)
 
 y muestra un resumen claro con el resultado de cada patrón.
 
@@ -31,19 +31,19 @@ RAIZ = Path(__file__).resolve().parent
 SUITES = {
     "singleton": {
         "titulo": "Patron SINGLETON",
-        "archivo": RAIZ / "Patrones" / "singleton" / "test_singleton.py",
+        "archivo": RAIZ / "Patrones" / "Semana 2" / "singleton" / "test_singleton.py",
     },
     "factory": {
         "titulo": "Patron FACTORY METHOD",
-        "archivo": RAIZ / "Patrones" / "factory_method" / "test_factory_method.py",
+        "archivo": RAIZ / "Patrones" / "Semana 3" / "factory_method" / "test_factory_method.py",
     },
     "abstract": {
         "titulo": "Patron ABSTRACT FACTORY",
-        "archivo": RAIZ / "Patrones" / "abstract_factory" / "test_abstract_factory.py",
+        "archivo": RAIZ / "Patrones" / "Semana 3" / "abstract_factory" / "test_abstract_factory.py",
     },
     "builder": {
         "titulo": "Patron BUILDER",
-        "archivo": RAIZ / "Patrones" / "builder" / "test_builder.py",
+        "archivo": RAIZ / "Patrones" / "Semana 4" / "builder" / "test_builder.py",
     },
 }
 

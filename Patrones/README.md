@@ -3,35 +3,38 @@
 Pruebas automatizadas (pytest) que validan la implementación de cada patrón
 de diseño aplicado en la Plataforma de Comercio de Energía.
 
-Cada patrón vive en su propia carpeta dentro de `Patrones/`, junto con su código y
-sus pruebas:
+Los patrones están organizados por semana dentro de `Patrones/`; cada uno vive en
+su propia carpeta con su código y sus pruebas:
 
 ```
 Patrones/
-├── singleton/
-│   ├── plataforma_energia.py       # código del patrón
-│   ├── test_singleton.py           # pruebas del patrón
-│   └── conftest.py                 # reinicia el Singleton entre pruebas
-├── factory_method/
-│   ├── factory_method.py           # código del patrón
-│   ├── test_factory_method.py      # pruebas del patrón
-│   └── conftest.py
-├── abstract_factory/
-│   ├── abstract_factory.py         # código del patrón
-│   ├── test_abstract_factory.py    # pruebas del patrón
-│   └── conftest.py
-└── builder/
-    ├── builder.py                  # código del patrón
-    ├── test_builder.py             # pruebas del patrón
-    └── conftest.py
+├── Semana 2/
+│   └── singleton/
+│       ├── plataforma_energia.py       # código del patrón
+│       ├── test_singleton.py           # pruebas del patrón
+│       └── conftest.py                 # reinicia el Singleton entre pruebas
+├── Semana 3/
+│   ├── factory_method/
+│   │   ├── factory_method.py
+│   │   ├── test_factory_method.py
+│   │   └── conftest.py
+│   └── abstract_factory/
+│       ├── abstract_factory.py
+│       ├── test_abstract_factory.py
+│       └── conftest.py
+└── Semana 4/
+    └── builder/
+        ├── builder.py
+        ├── test_builder.py
+        └── conftest.py
 ```
 
-| Patrón | Módulo bajo prueba | Archivo de pruebas |
-|---|---|---|
-| Singleton | [`plataforma_energia.py`](singleton/plataforma_energia.py) | [`test_singleton.py`](singleton/test_singleton.py) |
-| Factory Method | [`factory_method.py`](factory_method/factory_method.py) | [`test_factory_method.py`](factory_method/test_factory_method.py) |
-| Abstract Factory | [`abstract_factory.py`](abstract_factory/abstract_factory.py) | [`test_abstract_factory.py`](abstract_factory/test_abstract_factory.py) |
-| Builder | [`builder.py`](builder/builder.py) | [`test_builder.py`](builder/test_builder.py) |
+| Patrón | Semana | Módulo bajo prueba | Archivo de pruebas |
+|---|---|---|---|
+| Singleton | 2 | [`plataforma_energia.py`](Semana%202/singleton/plataforma_energia.py) | [`test_singleton.py`](Semana%202/singleton/test_singleton.py) |
+| Factory Method | 3 | [`factory_method.py`](Semana%203/factory_method/factory_method.py) | [`test_factory_method.py`](Semana%203/factory_method/test_factory_method.py) |
+| Abstract Factory | 3 | [`abstract_factory.py`](Semana%203/abstract_factory/abstract_factory.py) | [`test_abstract_factory.py`](Semana%203/abstract_factory/test_abstract_factory.py) |
+| Builder | 4 | [`builder.py`](Semana%204/builder/builder.py) | [`test_builder.py`](Semana%204/builder/test_builder.py) |
 
 ## Cómo ejecutar
 
@@ -44,7 +47,7 @@ python -m pytest
 Opciones útiles:
 
 ```bash
-python -m pytest Patrones/singleton                 # solo un patrón
+python -m pytest "Patrones/Semana 3"                # solo una semana
 python -m pytest -k subasta                         # por palabra clave
 python -m pytest -q                                 # salida compacta
 python -m pytest -v                                 # detalle por caso (por defecto)
@@ -52,17 +55,17 @@ python -m pytest -v                                 # detalle por caso (por defe
 
 - Configuración en [`pytest.ini`](../pytest.ini).
 - Cada carpeta de patrón tiene su propio `conftest.py`, que añade esa carpeta al
-  `sys.path`. El de [`singleton/`](singleton/conftest.py) además **reinicia el
-  Singleton** (`SingletonMeta._instances`) antes y después de cada prueba, para
-  que los casos sean independientes.
+  `sys.path`. El de [`Semana 2/singleton/`](Semana%202/singleton/conftest.py) además
+  **reinicia el Singleton** (`SingletonMeta._instances`) antes y después de cada
+  prueba, para que los casos sean independientes.
 
 ## Resultado esperado
 
 ```
-Patrones\abstract_factory\test_abstract_factory.py ...........................  [ 29%]
-Patrones\builder\test_builder.py ..............................                [ 62%]
-Patrones\factory_method\test_factory_method.py ................                [ 80%]
-Patrones\singleton\test_singleton.py ..................                        [100%]
+Patrones\Semana 2\singleton\test_singleton.py ..................              [ 19%]
+Patrones\Semana 3\abstract_factory\test_abstract_factory.py ...............   [ 49%]
+Patrones\Semana 3\factory_method\test_factory_method.py ................      [ 67%]
+Patrones\Semana 4\builder\test_builder.py ..............................      [100%]
 
 91 passed
 ```

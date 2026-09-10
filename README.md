@@ -7,29 +7,22 @@ La plataforma contempla funcionalidades como el registro de usuarios, publicaci�
 
 ## Patrones de diseño (`Patrones/`)
 
-Todo el código de los patrones de diseño aplicados está bajo `Patrones/`, con una
-carpeta por patrón que contiene su implementación y sus pruebas:
+El código de los patrones de diseño está bajo `Patrones/`, organizado por semana;
+cada patrón tiene su carpeta con su implementación y sus pruebas:
 
 ```
 Patrones/
-├── README.md                       # documento de pruebas (casos por patrón)
-├── singleton/
-│   ├── plataforma_energia.py       # implementación del patrón Singleton
-│   ├── test_singleton.py           # pruebas del patrón
-│   └── conftest.py
-├── factory_method/
-│   ├── factory_method.py           # implementación del patrón Factory Method
-│   ├── test_factory_method.py      # pruebas del patrón
-│   └── conftest.py
-├── abstract_factory/
-│   ├── abstract_factory.py         # implementación del patrón Abstract Factory
-│   ├── test_abstract_factory.py    # pruebas del patrón
-│   └── conftest.py
-└── builder/
-    ├── builder.py                  # implementación del patrón Builder
-    ├── test_builder.py             # pruebas del patrón
-    └── conftest.py
+├── README.md                           # documento de pruebas (casos por patrón)
+├── Semana 2/
+│   └── singleton/                      # patrón Singleton
+├── Semana 3/
+│   ├── factory_method/                 # patrón Factory Method
+│   └── abstract_factory/               # patrón Abstract Factory
+└── Semana 4/
+    └── builder/                        # patrón Builder
 ```
+
+El documento Word del proyecto está en [`Documentacion/`](Documentacion/).
 
 ```bash
 pip install -r requirements-dev.txt
