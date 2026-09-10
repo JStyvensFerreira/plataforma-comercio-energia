@@ -9,20 +9,22 @@ la carpeta de su semana:
 
 ```
 Patrones/
-├── Semana 2/
-│   ├── Patron Singleton.md          # explicación del patrón
-│   ├── plataforma_energia.py        # código del patrón
-│   ├── test_singleton.py            # pruebas del patrón
+├── Semana 2/                        # Singleton
+│   ├── Patron Singleton.md
+│   ├── plataforma_energia.py
+│   ├── test_singleton.py
 │   └── conftest.py                  # reinicia el Singleton entre pruebas
-├── Semana 3/
+├── Semana 3/                        # Factory Method
 │   ├── Patron Factory Method.md
-│   ├── Patron Abstract Factory.md
 │   ├── factory_method.py
-│   ├── abstract_factory.py
 │   ├── test_factory_method.py
+│   └── conftest.py
+├── Semana 4/                        # Abstract Factory
+│   ├── Patron Abstract Factory.md
+│   ├── abstract_factory.py
 │   ├── test_abstract_factory.py
-│   └── conftest.py                  # sys.path para ambos patrones de la semana
-└── Semana 4/
+│   └── conftest.py
+└── Semana 5/                        # Builder
     ├── Patron Builder.md
     ├── builder.py
     ├── test_builder.py
@@ -33,8 +35,8 @@ Patrones/
 |---|---|---|---|---|
 | Singleton | 2 | [`Patron Singleton.md`](Semana%202/Patron%20Singleton.md) | [`plataforma_energia.py`](Semana%202/plataforma_energia.py) | [`test_singleton.py`](Semana%202/test_singleton.py) |
 | Factory Method | 3 | [`Patron Factory Method.md`](Semana%203/Patron%20Factory%20Method.md) | [`factory_method.py`](Semana%203/factory_method.py) | [`test_factory_method.py`](Semana%203/test_factory_method.py) |
-| Abstract Factory | 3 | [`Patron Abstract Factory.md`](Semana%203/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%203/abstract_factory.py) | [`test_abstract_factory.py`](Semana%203/test_abstract_factory.py) |
-| Builder | 4 | [`Patron Builder.md`](Semana%204/Patron%20Builder.md) | [`builder.py`](Semana%204/builder.py) | [`test_builder.py`](Semana%204/test_builder.py) |
+| Abstract Factory | 4 | [`Patron Abstract Factory.md`](Semana%204/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%204/abstract_factory.py) | [`test_abstract_factory.py`](Semana%204/test_abstract_factory.py) |
+| Builder | 5 | [`Patron Builder.md`](Semana%205/Patron%20Builder.md) | [`builder.py`](Semana%205/builder.py) | [`test_builder.py`](Semana%205/test_builder.py) |
 
 ## Cómo ejecutar
 
@@ -63,9 +65,9 @@ python -m pytest -v                                 # detalle por caso (por defe
 
 ```
 Patrones\Semana 2\test_singleton.py ..................              [ 19%]
-Patrones\Semana 3\test_abstract_factory.py ...............          [ 49%]
-Patrones\Semana 3\test_factory_method.py ................           [ 67%]
-Patrones\Semana 4\test_builder.py ..............................    [100%]
+Patrones\Semana 3\test_factory_method.py ................           [ 37%]
+Patrones\Semana 4\test_abstract_factory.py ...............          [ 67%]
+Patrones\Semana 5\test_builder.py ..............................    [100%]
 
 91 passed
 ```

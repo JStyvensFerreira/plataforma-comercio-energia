@@ -15,8 +15,9 @@ directamente en la carpeta de su semana:
 Patrones/
 ├── README.md          # documento de pruebas (casos por patrón)
 ├── Semana 2/           # patrón Singleton
-├── Semana 3/           # patrones Factory Method y Abstract Factory
-└── Semana 4/           # patrón Builder
+├── Semana 3/           # patrón Factory Method
+├── Semana 4/           # patrón Abstract Factory
+└── Semana 5/           # patrón Builder
 ```
 
 El documento Word y la contextualización están en [`Documentacion/`](Documentacion/).

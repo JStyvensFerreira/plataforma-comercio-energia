@@ -6,8 +6,8 @@ ABSTRACT FACTORY y BUILDER.
 Ejecuta la batería de pruebas de:
     - Patrones/Semana 2/test_singleton.py           (patrón Singleton)
     - Patrones/Semana 3/test_factory_method.py      (patrón Factory Method)
-    - Patrones/Semana 3/test_abstract_factory.py    (patrón Abstract Factory)
-    - Patrones/Semana 4/test_builder.py             (patrón Builder)
+    - Patrones/Semana 4/test_abstract_factory.py    (patrón Abstract Factory)
+    - Patrones/Semana 5/test_builder.py             (patrón Builder)
 
 y muestra un resumen claro con el resultado de cada patrón.
 
@@ -39,11 +39,11 @@ SUITES = {
     },
     "abstract": {
         "titulo": "Patron ABSTRACT FACTORY",
-        "archivo": RAIZ / "Patrones" / "Semana 3" / "test_abstract_factory.py",
+        "archivo": RAIZ / "Patrones" / "Semana 4" / "test_abstract_factory.py",
     },
     "builder": {
         "titulo": "Patron BUILDER",
-        "archivo": RAIZ / "Patrones" / "Semana 4" / "test_builder.py",
+        "archivo": RAIZ / "Patrones" / "Semana 5" / "test_builder.py",
     },
 }
 

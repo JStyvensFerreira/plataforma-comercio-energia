@@ -1,7 +1,8 @@
 """
-Configuración de pytest para el patrón BUILDER.
+Configuración de pytest para el patrón ABSTRACT FACTORY.
 
-Añade esta carpeta al `sys.path` para poder importar `builder.py` directamente.
+Añade esta carpeta al `sys.path` para poder importar `abstract_factory.py`
+directamente.
 """
 
 import os

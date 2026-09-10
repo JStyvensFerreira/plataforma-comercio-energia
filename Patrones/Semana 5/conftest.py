@@ -1,8 +1,7 @@
 """
-Configuración de pytest para el patrón FACTORY METHOD.
+Configuración de pytest para el patrón BUILDER.
 
-Añade esta carpeta al `sys.path` para poder importar `factory_method.py`
-directamente.
+Añade esta carpeta al `sys.path` para poder importar `builder.py` directamente.
 """
 
 import os

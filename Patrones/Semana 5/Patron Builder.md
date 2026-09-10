@@ -109,7 +109,7 @@ DirectorReportes(crear_builder("texto")).reporte_para_factura(datos)   # -> str
 
 ```bash
 # desde la raíz del repositorio
-python -m pytest "Patrones/Semana 4/test_builder.py" -v   # 30 casos
+python -m pytest "Patrones/Semana 5/test_builder.py" -v   # 30 casos
 python validar_pruebas.py builder                         # resumen del patrón
-python "Patrones/Semana 4/builder.py"                    # demo por consola
+python "Patrones/Semana 5/builder.py"                    # demo por consola
 ```
