@@ -3,9 +3,9 @@
 Implementación del patrón **Singleton** sobre la clase `PlataformaEnergia`, el
 "libro mayor" central del sistema.
 
-- Código del patrón (con demo y docstring explicativo): [`Patrones/Semana 2/singleton/plataforma_energia.py`](Patrones/Semana%202/singleton/plataforma_energia.py)
-- Pruebas del patrón: [`Patrones/Semana 2/singleton/test_singleton.py`](Patrones/Semana%202/singleton/test_singleton.py)
-- Uso real en la aplicación: [`plataforma-energia-app/backend/plataforma.py`](plataforma-energia-app/backend/plataforma.py) — consumido por [`main.py`](plataforma-energia-app/backend/main.py)
+- Código del patrón (con demo y docstring explicativo): [`plataforma_energia.py`](plataforma_energia.py)
+- Pruebas del patrón: [`test_singleton.py`](test_singleton.py)
+- Uso real en la aplicación: [`plataforma-energia-app/backend/plataforma.py`](../../../plataforma-energia-app/backend/plataforma.py) — consumido por [`main.py`](../../../plataforma-energia-app/backend/main.py)
 
 <img width="1907" height="1190" alt="Validación del Singleton en la plataforma" src="https://github.com/user-attachments/assets/2665051e-c8ad-444f-9d79-722e7a910088" />
 

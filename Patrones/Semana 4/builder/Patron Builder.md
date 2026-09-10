@@ -5,10 +5,10 @@ de la plataforma: el objeto que resume, para un usuario y un período, su balanc
 de producción/consumo, el desglose por dispositivo IoT, el historial de
 operaciones en la subasta y la predicción de la próxima lectura.
 
-- Código del patrón (con demo y docstring explicativo): [`Patrones/Semana 4/builder/builder.py`](Patrones/Semana%204/builder/builder.py)
-- Pruebas del patrón: [`Patrones/Semana 4/builder/test_builder.py`](Patrones/Semana%204/builder/test_builder.py)
-- Documento de casos de prueba: [`Patrones/README.md`](Patrones/README.md#casos-de-prueba--builder)
-- Uso real en la aplicación: [`plataforma-energia-app/backend/reportes.py`](plataforma-energia-app/backend/reportes.py) — consumido por [`plataforma.py`](plataforma-energia-app/backend/plataforma.py) (`generar_reporte`) y expuesto en [`main.py`](plataforma-energia-app/backend/main.py) (`POST /reportes/generar`)
+- Código del patrón (con demo y docstring explicativo): [`builder.py`](builder.py)
+- Pruebas del patrón: [`test_builder.py`](test_builder.py)
+- Documento de casos de prueba: [`Patrones/README.md`](../../README.md#casos-de-prueba--builder)
+- Uso real en la aplicación: [`plataforma-energia-app/backend/reportes.py`](../../../plataforma-energia-app/backend/reportes.py) — consumido por [`plataforma.py`](../../../plataforma-energia-app/backend/plataforma.py) (`generar_reporte`) y expuesto en [`main.py`](../../../plataforma-energia-app/backend/main.py) (`POST /reportes/generar`)
 
 ## Por qué este patrón aquí
 

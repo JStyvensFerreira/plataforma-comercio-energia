@@ -3,10 +3,10 @@
 Implementación del patrón **Abstract Factory** (Fábrica Abstracta) sobre los
 **canales de notificación** de la plataforma: correo, SMS y push a la app móvil.
 
-- Código del patrón (con demo y docstring explicativo): [`Patrones/Semana 3/abstract_factory/abstract_factory.py`](Patrones/Semana%203/abstract_factory/abstract_factory.py)
-- Pruebas del patrón: [`Patrones/Semana 3/abstract_factory/test_abstract_factory.py`](Patrones/Semana%203/abstract_factory/test_abstract_factory.py)
-- Documento de casos de prueba: [`Patrones/README.md`](Patrones/README.md#casos-de-prueba--abstract-factory)
-- Uso real en la aplicación: [`plataforma-energia-app/backend/notificaciones.py`](plataforma-energia-app/backend/notificaciones.py) — consumido por [`plataforma.py`](plataforma-energia-app/backend/plataforma.py) (`_servicio_notificaciones`) y expuesto en [`main.py`](plataforma-energia-app/backend/main.py) (`/notificaciones`, `/usuarios/me/canal`, `/reportes/generar`)
+- Código del patrón (con demo y docstring explicativo): [`abstract_factory.py`](abstract_factory.py)
+- Pruebas del patrón: [`test_abstract_factory.py`](test_abstract_factory.py)
+- Documento de casos de prueba: [`Patrones/README.md`](../../README.md#casos-de-prueba--abstract-factory)
+- Uso real en la aplicación: [`plataforma-energia-app/backend/notificaciones.py`](../../../plataforma-energia-app/backend/notificaciones.py) — consumido por [`plataforma.py`](../../../plataforma-energia-app/backend/plataforma.py) (`_servicio_notificaciones`) y expuesto en [`main.py`](../../../plataforma-energia-app/backend/main.py) (`/notificaciones`, `/usuarios/me/canal`, `/reportes/generar`)
 
 ## Por qué este patrón aquí
 

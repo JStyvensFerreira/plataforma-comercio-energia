@@ -8,7 +8,8 @@ La plataforma contempla funcionalidades como el registro de usuarios, publicaci�
 ## Patrones de diseño (`Patrones/`)
 
 El código de los patrones de diseño está bajo `Patrones/`, organizado por semana;
-cada patrón tiene su carpeta con su implementación y sus pruebas:
+cada patrón tiene su carpeta con su explicación (`Patron *.md`), su implementación
+y sus pruebas:
 
 ```
 Patrones/

@@ -10,31 +10,34 @@ su propia carpeta con su código y sus pruebas:
 Patrones/
 ├── Semana 2/
 │   └── singleton/
-│       ├── plataforma_energia.py       # código del patrón
-│       ├── test_singleton.py           # pruebas del patrón
-│       └── conftest.py                 # reinicia el Singleton entre pruebas
+│       ├── Patron Singleton.md          # explicación del patrón
+│       ├── plataforma_energia.py        # código del patrón
+│       ├── test_singleton.py            # pruebas del patrón
+│       └── conftest.py                  # reinicia el Singleton entre pruebas
 ├── Semana 3/
 │   ├── factory_method/
 │   │   ├── factory_method.py
 │   │   ├── test_factory_method.py
 │   │   └── conftest.py
 │   └── abstract_factory/
+│       ├── Patron Abstract Factory.md
 │       ├── abstract_factory.py
 │       ├── test_abstract_factory.py
 │       └── conftest.py
 └── Semana 4/
     └── builder/
+        ├── Patron Builder.md
         ├── builder.py
         ├── test_builder.py
         └── conftest.py
 ```
 
-| Patrón | Semana | Módulo bajo prueba | Archivo de pruebas |
-|---|---|---|---|
-| Singleton | 2 | [`plataforma_energia.py`](Semana%202/singleton/plataforma_energia.py) | [`test_singleton.py`](Semana%202/singleton/test_singleton.py) |
-| Factory Method | 3 | [`factory_method.py`](Semana%203/factory_method/factory_method.py) | [`test_factory_method.py`](Semana%203/factory_method/test_factory_method.py) |
-| Abstract Factory | 3 | [`abstract_factory.py`](Semana%203/abstract_factory/abstract_factory.py) | [`test_abstract_factory.py`](Semana%203/abstract_factory/test_abstract_factory.py) |
-| Builder | 4 | [`builder.py`](Semana%204/builder/builder.py) | [`test_builder.py`](Semana%204/builder/test_builder.py) |
+| Patrón | Semana | Explicación | Módulo bajo prueba | Archivo de pruebas |
+|---|---|---|---|---|
+| Singleton | 2 | [`Patron Singleton.md`](Semana%202/singleton/Patron%20Singleton.md) | [`plataforma_energia.py`](Semana%202/singleton/plataforma_energia.py) | [`test_singleton.py`](Semana%202/singleton/test_singleton.py) |
+| Factory Method | 3 | — | [`factory_method.py`](Semana%203/factory_method/factory_method.py) | [`test_factory_method.py`](Semana%203/factory_method/test_factory_method.py) |
+| Abstract Factory | 3 | [`Patron Abstract Factory.md`](Semana%203/abstract_factory/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%203/abstract_factory/abstract_factory.py) | [`test_abstract_factory.py`](Semana%203/abstract_factory/test_abstract_factory.py) |
+| Builder | 4 | [`Patron Builder.md`](Semana%204/builder/Patron%20Builder.md) | [`builder.py`](Semana%204/builder/builder.py) | [`test_builder.py`](Semana%204/builder/test_builder.py) |
 
 ## Cómo ejecutar
 
