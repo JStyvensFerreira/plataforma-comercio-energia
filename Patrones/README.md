@@ -11,32 +11,40 @@ la carpeta de su semana:
 Patrones/
 ├── Semana 2/                        # Singleton
 │   ├── Patron Singleton.md
+│   ├── UML_Singleton.png            # diagrama UML de clases
 │   ├── plataforma_energia.py
 │   ├── test_singleton.py
 │   └── conftest.py                  # reinicia el Singleton entre pruebas
 ├── Semana 3/                        # Factory Method
 │   ├── Patron Factory Method.md
+│   ├── UML_FactoryMethod.png
 │   ├── factory_method.py
 │   ├── test_factory_method.py
 │   └── conftest.py
 ├── Semana 4/                        # Abstract Factory
 │   ├── Patron Abstract Factory.md
+│   ├── UML_AbstractFactory.png
 │   ├── abstract_factory.py
 │   ├── test_abstract_factory.py
 │   └── conftest.py
 └── Semana 5/                        # Builder
     ├── Patron Builder.md
+    ├── UML_Builder.png
     ├── builder.py
     ├── test_builder.py
     └── conftest.py
 ```
 
-| Patrón | Semana | Explicación | Módulo bajo prueba | Archivo de pruebas |
-|---|---|---|---|---|
-| Singleton | 2 | [`Patron Singleton.md`](Semana%202/Patron%20Singleton.md) | [`plataforma_energia.py`](Semana%202/plataforma_energia.py) | [`test_singleton.py`](Semana%202/test_singleton.py) |
-| Factory Method | 3 | [`Patron Factory Method.md`](Semana%203/Patron%20Factory%20Method.md) | [`factory_method.py`](Semana%203/factory_method.py) | [`test_factory_method.py`](Semana%203/test_factory_method.py) |
-| Abstract Factory | 4 | [`Patron Abstract Factory.md`](Semana%204/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%204/abstract_factory.py) | [`test_abstract_factory.py`](Semana%204/test_abstract_factory.py) |
-| Builder | 5 | [`Patron Builder.md`](Semana%205/Patron%20Builder.md) | [`builder.py`](Semana%205/builder.py) | [`test_builder.py`](Semana%205/test_builder.py) |
+Cada carpeta incluye además el **diagrama UML de clases** del patrón (generado a
+partir del código real), embebido también en el documento Word (Figuras 16-19)
+junto con una sección de evaluación de si el patrón se justifica para el proyecto.
+
+| Patrón | Semana | Explicación | Módulo bajo prueba | Archivo de pruebas | Diagrama UML |
+|---|---|---|---|---|---|
+| Singleton | 2 | [`Patron Singleton.md`](Semana%202/Patron%20Singleton.md) | [`plataforma_energia.py`](Semana%202/plataforma_energia.py) | [`test_singleton.py`](Semana%202/test_singleton.py) | [`UML_Singleton.png`](Semana%202/UML_Singleton.png) |
+| Factory Method | 3 | [`Patron Factory Method.md`](Semana%203/Patron%20Factory%20Method.md) | [`factory_method.py`](Semana%203/factory_method.py) | [`test_factory_method.py`](Semana%203/test_factory_method.py) | [`UML_FactoryMethod.png`](Semana%203/UML_FactoryMethod.png) |
+| Abstract Factory | 4 | [`Patron Abstract Factory.md`](Semana%204/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%204/abstract_factory.py) | [`test_abstract_factory.py`](Semana%204/test_abstract_factory.py) | [`UML_AbstractFactory.png`](Semana%204/UML_AbstractFactory.png) |
+| Builder | 5 | [`Patron Builder.md`](Semana%205/Patron%20Builder.md) | [`builder.py`](Semana%205/builder.py) | [`test_builder.py`](Semana%205/test_builder.py) | [`UML_Builder.png`](Semana%205/UML_Builder.png) |
 
 ## Cómo ejecutar
 
