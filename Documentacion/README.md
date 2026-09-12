@@ -3,12 +3,12 @@
 Pruebas automatizadas (pytest) que validan la implementación de cada patrón
 de diseño aplicado en la Plataforma de Comercio de Energía.
 
-Los patrones están organizados por semana dentro de `Patrones/`; los archivos de
-cada patrón (explicación, código, pruebas y `conftest.py`) viven directamente en
+Los patrones están organizados por semana dentro de `Documentacion/`; los archivos
+de cada patrón (explicación, código, pruebas y `conftest.py`) viven directamente en
 la carpeta de su semana:
 
 ```
-Patrones/
+Documentacion/
 ├── Semana 2/                        # Singleton
 │   ├── Patron Singleton.md
 │   ├── UML_Singleton.png            # diagrama UML de clases
@@ -27,11 +27,16 @@ Patrones/
 │   ├── abstract_factory.py
 │   ├── test_abstract_factory.py
 │   └── conftest.py
-└── Semana 5/                        # Builder
-    ├── Patron Builder.md
-    ├── UML_Builder.png
-    ├── builder.py
-    ├── test_builder.py
+├── Semana 5/                        # Builder
+│   ├── Patron Builder.md
+│   ├── UML_Builder.png
+│   ├── builder.py
+│   ├── test_builder.py
+│   └── conftest.py
+└── Semana 6/                        # Prototype
+    ├── Patron Prototype.md
+    ├── prototype.py
+    ├── test_prototype.py
     └── conftest.py
 ```
 
@@ -45,6 +50,7 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Factory Method | 3 | [`Patron Factory Method.md`](Semana%203/Patron%20Factory%20Method.md) | [`factory_method.py`](Semana%203/factory_method.py) | [`test_factory_method.py`](Semana%203/test_factory_method.py) | [`UML_FactoryMethod.png`](Semana%203/UML_FactoryMethod.png) |
 | Abstract Factory | 4 | [`Patron Abstract Factory.md`](Semana%204/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%204/abstract_factory.py) | [`test_abstract_factory.py`](Semana%204/test_abstract_factory.py) | [`UML_AbstractFactory.png`](Semana%204/UML_AbstractFactory.png) |
 | Builder | 5 | [`Patron Builder.md`](Semana%205/Patron%20Builder.md) | [`builder.py`](Semana%205/builder.py) | [`test_builder.py`](Semana%205/test_builder.py) | [`UML_Builder.png`](Semana%205/UML_Builder.png) |
+| Prototype | 6 | [`Patron Prototype.md`](Semana%206/Patron%20Prototype.md) | [`prototype.py`](Semana%206/prototype.py) | [`test_prototype.py`](Semana%206/test_prototype.py) | — |
 
 ## Cómo ejecutar
 
@@ -57,7 +63,7 @@ python -m pytest
 Opciones útiles:
 
 ```bash
-python -m pytest "Patrones/Semana 3"                # solo una semana
+python -m pytest "Documentacion/Semana 3"           # solo una semana
 python -m pytest -k subasta                         # por palabra clave
 python -m pytest -q                                 # salida compacta
 python -m pytest -v                                 # detalle por caso (por defecto)
@@ -72,12 +78,13 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Patrones\Semana 2\test_singleton.py ..................              [ 19%]
-Patrones\Semana 3\test_factory_method.py ................           [ 37%]
-Patrones\Semana 4\test_abstract_factory.py ...............          [ 67%]
-Patrones\Semana 5\test_builder.py ..............................    [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [ 15%]
+Documentacion\Semana 3\test_factory_method.py ................           [ 29%]
+Documentacion\Semana 4\test_abstract_factory.py ........................ [ 50%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 79%]
+Documentacion\Semana 6\test_prototype.py ........................        [100%]
 
-91 passed
+115 passed
 ```
 
 ---
@@ -190,3 +197,34 @@ nuevo no obliga a modificar el código existente.
 | B-22 | `test_cada_paso_devuelve_el_builder_para_encadenar` | Cada paso devuelve `self` (interfaz fluida) |
 | B-23 | `test_encadenado_a_mano_equivale_a_la_receta_del_director` | Encadenar los pasos a mano == `DirectorReportes.reporte_ejecutivo` |
 | B-24 | `test_se_puede_agregar_un_builder_sin_modificar_los_existentes` | Un `ReporteMarkdownBuilder` nuevo funciona con el `DirectorReportes` sin tocar nada (abierto/cerrado) |
+
+## Casos de prueba — Prototype
+
+Verifica que clonar un dispositivo IoT ya calibrado preserva su configuración
+(tipo, umbrales, notas) mediante copia PROFUNDA (sin compartir estado mutable con
+el original ni entre clones), que se pueden ajustar campos puntuales al clonar, y
+que el `RegistroPlantillas` resuelve plantillas por nombre con el mismo contrato
+que las demás fábricas del proyecto.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| P-01 | `test_dispositivo_implementa_la_interfaz_prototipo` | `DispositivoIoT` implementa `PrototipoDispositivo` |
+| P-02 | `test_el_clon_es_un_objeto_distinto_del_original` | `clonar()` devuelve una instancia nueva, no la misma referencia |
+| P-03 | `test_el_clon_tiene_el_id_nuevo` / `test_el_original_conserva_su_id` | El `id` cambia en el clon y no se altera en el original |
+| P-04 | `test_sin_nuevo_usuario_el_clon_hereda_el_usuario_del_original` / `test_con_nuevo_usuario_el_clon_queda_a_nombre_de_ese_usuario` | `usuario_id` es opcional al clonar |
+| P-05 | `test_el_clon_conserva_el_tipo` | El tipo de dispositivo se preserva |
+| P-06 | `test_el_clon_conserva_los_umbrales_calibrados` | `umbral_min`/`umbral_max` calibrados se preservan |
+| P-07 | `test_el_clon_conserva_las_notas_de_calibracion` | Las notas de calibración se preservan |
+| P-08 | `test_las_notas_del_clon_no_son_el_mismo_objeto_lista` | La lista de notas del clon es un objeto distinto (copia profunda) |
+| P-09 | `test_modificar_las_notas_del_clon_no_afecta_al_original` | Cambios en el clon no se filtran al original |
+| P-10 | `test_dos_clones_del_mismo_original_no_comparten_las_notas` | Dos clones del mismo original no comparten la lista de notas |
+| P-11 | `test_modificar_un_umbral_del_clon_no_afecta_al_original` | Los campos escalares también son independientes tras clonar |
+| P-12 | `test_se_puede_ajustar_un_umbral_al_clonar` / `test_el_override_no_afecta_al_original` | `clonar(**cambios)` sobreescribe campos puntuales sin tocar el original |
+| P-13 | `test_los_campos_no_sobrescritos_mantienen_el_valor_clonado` | Un override parcial no borra el resto de la configuración clonada |
+| P-14 | `test_override_de_un_campo_inexistente_lanza_value_error` | Un campo inválido en `**cambios` lanza `ValueError` |
+| P-15 | `test_plantilla_registrada_aparece_en_las_disponibles` | `RegistroPlantillas.plantillas_disponibles` refleja lo registrado |
+| P-16 | `test_crear_desde_plantilla_devuelve_un_clon_configurado` | `crear_desde_plantilla` clona con la configuración de la plantilla |
+| P-17 | `test_crear_desde_plantilla_admite_overrides` | `crear_desde_plantilla` acepta `**cambios` igual que `clonar()` |
+| P-18 | `test_plantilla_inexistente_lanza_value_error_con_las_disponibles` | Plantilla desconocida → `ValueError` con las disponibles |
+| P-19 | `test_registrar_una_plantilla_guarda_una_copia_no_la_referencia` | Modificar el original tras registrarlo no altera la plantilla guardada |
+| P-20 | `test_dos_plantillas_distintas_producen_clones_independientes` | Dos plantillas registradas producen clones del tipo correcto cada una |

@@ -5,22 +5,23 @@ La Plataforma de Comercio de Energía es un sistema digital diseñado para facil
 La plataforma contempla funcionalidades como el registro de usuarios, publicación de ofertas, participación en subastas, monitoreo del consumo y la producción, integración con dispositivos IoT y análisis predictivo. El sistema está planteado con una arquitectura modular y escalable, que puede ampliarse posteriormente con pagos electrónicos, aplicaciones móviles, integración con empresas distribuidoras y tecnologías como blockchain..
 
 
-## Patrones de diseño (`Patrones/`)
+## Patrones de diseño (`Documentacion/`)
 
-El código de los patrones de diseño está bajo `Patrones/`, organizado por semana.
-Los archivos de cada patrón (explicación `Patron *.md`, código, pruebas) están
-directamente en la carpeta de su semana:
+El código de los patrones de diseño está bajo `Documentacion/`, organizado por
+semana. Los archivos de cada patrón (explicación `Patron *.md`, código, pruebas)
+están directamente en la carpeta de su semana:
 
 ```
-Patrones/
-├── README.md          # documento de pruebas (casos por patrón)
-├── Semana 2/           # patrón Singleton
-├── Semana 3/           # patrón Factory Method
-├── Semana 4/           # patrón Abstract Factory
-└── Semana 5/           # patrón Builder
+Documentacion/
+├── README.md           # documento de pruebas (casos por patrón)
+├── Semana 2/            # patrón Singleton
+├── Semana 3/            # patrón Factory Method
+├── Semana 4/            # patrón Abstract Factory
+├── Semana 5/            # patrón Builder
+└── Semana 6/            # patrón Prototype
 ```
 
-El documento Word y la contextualización están en [`Documentacion/`](Documentacion/).
+El documento Word y la contextualización también están en [`Documentacion/`](Documentacion/).
 
 ```bash
 pip install -r requirements-dev.txt
@@ -28,7 +29,7 @@ python -m pytest                          # ejecuta todas las pruebas de los pat
 python Herramientas/validar_pruebas.py    # resumen por patrón (o Herramientas/validar_pruebas.bat en Windows)
 ```
 
-Ver [`Patrones/README.md`](Patrones/README.md) para el detalle de cada caso de prueba.
+Ver [`Documentacion/README.md`](Documentacion/README.md) para el detalle de cada caso de prueba.
 
 ## Estructura de la aplicación
 

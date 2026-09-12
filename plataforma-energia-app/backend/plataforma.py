@@ -9,6 +9,7 @@ from datetime import datetime
 from statistics import mean
 from threading import Lock
 from typing import Optional
+import copy
 import itertools
 import random
 
@@ -300,6 +301,40 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         self.dispositivos[id_dispositivo] = dispositivo
         self.lecturas_iot.setdefault(id_dispositivo, [])
         return dispositivo
+
+    # ---------- Alta por clonación (patrón Prototype) ----------
+    def clonar_dispositivo(
+        self,
+        dispositivo_id: str,
+        nuevo_id: str,
+        usuario_id: str,
+        umbral_min: Optional[float] = None,
+        umbral_max: Optional[float] = None,
+    ) -> DispositivoIoT:
+        """
+        Da de alta un dispositivo nuevo CLONANDO uno ya calibrado, en vez de
+        crearlo desde cero con los umbrales por defecto del tipo
+        (`UMBRALES_IOT`). Útil para instalaciones con varios dispositivos
+        idénticos (mismo tipo y mismos umbrales ajustados en campo): el
+        operador no repite esos números a mano en cada alta.
+        """
+        original = self.dispositivos.get(dispositivo_id)
+        if original is None:
+            raise ValueError(f"Dispositivo {dispositivo_id} no está registrado")
+        if nuevo_id in self.dispositivos:
+            raise ValueError(f"Dispositivo {nuevo_id} ya existe")
+
+        clon = copy.deepcopy(original)
+        clon.id = nuevo_id
+        clon.usuario_id = usuario_id
+        if umbral_min is not None:
+            clon.umbral_min = umbral_min
+        if umbral_max is not None:
+            clon.umbral_max = umbral_max
+
+        self.dispositivos[nuevo_id] = clon
+        self.lecturas_iot.setdefault(nuevo_id, [])
+        return clon
 
     def enviar_lectura_iot(self, id_dispositivo: str, valor_kwh: float) -> None:
         if id_dispositivo not in self.dispositivos:

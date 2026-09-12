@@ -70,6 +70,12 @@ class DispositivoIn(BaseModel):
     umbral_max: float | None = None
 
 
+class ClonarDispositivoIn(BaseModel):
+    nuevo_id: str
+    umbral_min: float | None = None
+    umbral_max: float | None = None
+
+
 class LecturaIn(BaseModel):
     valor_kwh: float
 
@@ -194,6 +200,24 @@ def crear_dispositivo(d: DispositivoIn, usuario_id: str = Depends(usuario_actual
 @app.get("/iot/dispositivos")
 def listar_dispositivos():
     return [d.to_dict() for d in plataforma.dispositivos.values()]
+
+
+@app.post("/iot/dispositivos/{dispositivo_id}/clonar")
+def clonar_dispositivo(
+    dispositivo_id: str, datos: ClonarDispositivoIn, usuario_id: str = Depends(usuario_actual)
+):
+    """
+    Da de alta un dispositivo nuevo clonando uno ya calibrado (patrón
+    Prototype) en vez de crearlo desde cero con los umbrales por defecto
+    del tipo. Solo se puede ajustar el umbral; el dispositivo clonado
+    siempre queda a nombre del usuario autenticado.
+    """
+    try:
+        return plataforma.clonar_dispositivo(
+            dispositivo_id, datos.nuevo_id, usuario_id, datos.umbral_min, datos.umbral_max
+        ).to_dict()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.post("/iot/dispositivos/{dispositivo_id}/lecturas")
