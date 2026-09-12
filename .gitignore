@@ -1,7 +1,0 @@
-__pycache__/
-*.pyc
-target/
-.pytest_cache/
-
-# Archivos temporales de Microsoft Office
-~$*

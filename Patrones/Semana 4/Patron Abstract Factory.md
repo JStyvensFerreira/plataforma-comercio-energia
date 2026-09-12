@@ -95,6 +95,6 @@ servicio.enviar_reporte(resumen)
 ```bash
 # desde la raíz del repositorio
 python -m pytest "Patrones/Semana 4/test_abstract_factory.py" -v   # 27 casos
-python validar_pruebas.py abstract                                 # resumen del patrón
+python Herramientas/validar_pruebas.py abstract                    # resumen del patrón
 python "Patrones/Semana 4/abstract_factory.py"                     # demo por consola
 ```

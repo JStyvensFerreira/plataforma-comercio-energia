@@ -24,8 +24,8 @@ El documento Word y la contextualización están en [`Documentacion/`](Documenta
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest              # ejecuta todas las pruebas de los patrones
-python validar_pruebas.py     # resumen por patrón (o validar_pruebas.bat en Windows)
+python -m pytest                          # ejecuta todas las pruebas de los patrones
+python Herramientas/validar_pruebas.py    # resumen por patrón (o Herramientas/validar_pruebas.bat en Windows)
 ```
 
 Ver [`Patrones/README.md`](Patrones/README.md) para el detalle de cada caso de prueba.

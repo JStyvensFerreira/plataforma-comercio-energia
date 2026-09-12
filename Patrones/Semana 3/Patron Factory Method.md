@@ -93,6 +93,6 @@ crear_dispositivo("cargador_ev", "ev-01", "u1")     # -> ValueError con los tipo
 ```bash
 # desde la raíz del repositorio
 python -m pytest "Patrones/Semana 3/test_factory_method.py" -v   # 16 casos
-python validar_pruebas.py factory                                # resumen del patrón
+python Herramientas/validar_pruebas.py factory                   # resumen del patrón
 python "Patrones/Semana 3/factory_method.py"                    # demo por consola
 ```

@@ -12,12 +12,12 @@ Ejecuta la batería de pruebas de:
 y muestra un resumen claro con el resultado de cada patrón.
 
 Uso:
-    python validar_pruebas.py            # ejecuta los cuatro patrones
-    python validar_pruebas.py singleton  # solo Singleton
-    python validar_pruebas.py factory    # solo Factory Method
-    python validar_pruebas.py abstract   # solo Abstract Factory
-    python validar_pruebas.py builder    # solo Builder
-    python validar_pruebas.py -v         # salida detallada de pytest
+    python Herramientas/validar_pruebas.py            # ejecuta los cuatro patrones
+    python Herramientas/validar_pruebas.py singleton  # solo Singleton
+    python Herramientas/validar_pruebas.py factory    # solo Factory Method
+    python Herramientas/validar_pruebas.py abstract   # solo Abstract Factory
+    python Herramientas/validar_pruebas.py builder    # solo Builder
+    python Herramientas/validar_pruebas.py -v         # salida detallada de pytest
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parent
+RAIZ = Path(__file__).resolve().parent.parent
 
 SUITES = {
     "singleton": {
