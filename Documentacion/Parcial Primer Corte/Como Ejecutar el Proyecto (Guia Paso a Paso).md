@@ -1,6 +1,6 @@
 # Cómo ejecutar el proyecto — Guía paso a paso 
 
-Esta guía asume que **no tienes nada instalado todavía** y que acabas de
+Esta guía  se asume que **no tienes nada instalado todavía** y que acabas de
 descargar (o clonar) este repositorio en tu computador. Está pensada para
 Windows, que es donde se desarrolló el proyecto; al final hay una nota para
 Mac/Linux.
