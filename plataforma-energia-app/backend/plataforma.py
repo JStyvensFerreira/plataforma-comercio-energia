@@ -13,17 +13,9 @@ import copy
 import itertools
 import random
 
+from factory_method import DispositivoIoT, crear_dispositivo
 from notificaciones import Mensaje, crear_servicio, obtener_canal
 from reportes import DatosReporte, DirectorReportes, crear_builder
-
-# Rango "normal" de lectura por tipo de dispositivo. Una lectura fuera de este
-# rango dispara una alerta IoT (patrón Abstract Factory: se notifica por el
-# canal que el dueño del dispositivo tenga configurado).
-UMBRALES_IOT: dict[str, tuple[float, float]] = {
-    "panel_solar": (0.0, 3.5),
-    "bateria": (-2.0, 2.0),
-    "medidor": (-2.5, 0.5),
-}
 
 
 class SingletonMeta(type):
@@ -81,26 +73,6 @@ class Orden:
         d = asdict(self)
         d["timestamp"] = self.timestamp.isoformat()
         return d
-
-
-@dataclass
-class DispositivoIoT:
-    id: str
-    usuario_id: str
-    tipo: str
-    umbral_min: Optional[float] = None
-    umbral_max: Optional[float] = None
-
-    def to_dict(self):
-        return asdict(self)
-
-    def fuera_de_rango(self, lectura: float) -> Optional[float]:
-        """Devuelve el umbral cruzado (o None si la lectura es normal)."""
-        if self.umbral_min is not None and lectura < self.umbral_min:
-            return self.umbral_min
-        if self.umbral_max is not None and lectura > self.umbral_max:
-            return self.umbral_max
-        return None
 
 
 class PlataformaEnergia(metaclass=SingletonMeta):
@@ -295,9 +267,12 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         umbral_min: Optional[float] = None,
         umbral_max: Optional[float] = None,
     ) -> DispositivoIoT:
-        if umbral_min is None and umbral_max is None:
-            umbral_min, umbral_max = UMBRALES_IOT.get(tipo, (None, None))
-        dispositivo = DispositivoIoT(id_dispositivo, usuario_id, tipo, umbral_min, umbral_max)
+        """
+        Da de alta un dispositivo IoT resolviendo su fábrica concreta según
+        el tipo (patrón Factory Method): la plataforma nunca decide con un
+        if/elif qué clase instanciar ni qué umbrales por defecto aplicar.
+        """
+        dispositivo = crear_dispositivo(tipo, id_dispositivo, usuario_id, umbral_min, umbral_max)
         self.dispositivos[id_dispositivo] = dispositivo
         self.lecturas_iot.setdefault(id_dispositivo, [])
         return dispositivo

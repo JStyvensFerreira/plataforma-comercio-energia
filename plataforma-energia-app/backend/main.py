@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
+from factory_method import TIPOS_DISPONIBLES
 from notificaciones import CANALES_DISPONIBLES
 from plataforma import PlataformaEnergia
 from reportes import FORMATOS_DISPONIBLES
@@ -190,11 +191,21 @@ def listar_transacciones():
     return plataforma.historial_transacciones
 
 
+@app.get("/iot/tipos")
+def listar_tipos_dispositivo():
+    """Tipos de dispositivo IoT soportados (una fábrica concreta por tipo)."""
+    return {"tipos": list(TIPOS_DISPONIBLES)}
+
+
 @app.post("/iot/dispositivos")
 def crear_dispositivo(d: DispositivoIn, usuario_id: str = Depends(usuario_actual)):
-    return plataforma.conectar_dispositivo(
-        d.id, usuario_id, d.tipo, d.umbral_min, d.umbral_max
-    ).to_dict()
+    """Da de alta un dispositivo IoT resolviendo su fábrica por tipo (patrón Factory Method)."""
+    try:
+        return plataforma.conectar_dispositivo(
+            d.id, usuario_id, d.tipo, d.umbral_min, d.umbral_max
+        ).to_dict()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.get("/iot/dispositivos")
