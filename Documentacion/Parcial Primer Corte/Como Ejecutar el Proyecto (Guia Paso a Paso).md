@@ -1,4 +1,4 @@
-# Cómo ejecutar el proyecto — Guía paso a paso (para quien nunca lo ha visto)
+# Cómo ejecutar el proyecto — Guía paso a paso 
 
 Esta guía asume que **no tienes nada instalado todavía** y que acabas de
 descargar (o clonar) este repositorio en tu computador. Está pensada para
