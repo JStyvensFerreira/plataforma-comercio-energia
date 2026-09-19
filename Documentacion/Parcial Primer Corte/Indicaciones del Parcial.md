@@ -25,13 +25,13 @@ punto dentro de este repositorio (para revisar antes de entregar).
 
 | Requisito | Dónde está |
 |---|---|
-| Portada con integrantes | [`Documentacion/plataforma-Comercio-Energia.docx`](../Documentacion/plataforma-Comercio-Energia.docx) (primera página) |
-| Contextualización del proyecto | Mismo documento, sección "Contextualización del Proyecto"; también [`Documentacion/Contextualizacion.md`](../Documentacion/Contextualizacion.md) |
+| Portada con integrantes | [`Documentacion/plataforma-Comercio-Energia.docx`](../plataforma-Comercio-Energia.docx) (primera página) |
+| Contextualización del proyecto | Mismo documento, sección "Contextualización del Proyecto"; también [`Documentacion/Contextualizacion.md`](../Contextualizacion.md) |
 | Objetivo General y Objetivos Específicos | Mismo documento, subsecciones dentro de "Contextualización del Proyecto" |
 | Explicación + UML + código + pruebas, **por cada uno de los 5 patrones** | Mismo documento: una sección por patrón (Singleton, Factory Method, Abstract Factory, Builder, Prototype), cada una con sus figuras numeradas (24 figuras en total, código real y diagramas UML incluidos) |
-| Código de cada patrón (versión educativa, uno por semana) | [`Documentacion/Semana 2`](../Documentacion/Semana%202) a [`Semana 6`](../Documentacion/Semana%206) |
-| Código del proyecto **total integrado** (los 5 patrones conectados entre sí, no solo demos aisladas) | [`plataforma-energia-app/backend/`](../plataforma-energia-app/backend) — `plataforma.py` (Singleton) usa `factory_method.py` (Factory Method), `notificaciones.py` (Abstract Factory), `reportes.py` (Builder) y tiene `clonar_dispositivo()` (Prototype) |
-| Instrucciones de ejecución | [`Como Ejecutar el Proyecto (Guia Paso a Paso).md`](Como%20Ejecutar%20el%20Proyecto%20%28Guia%20Paso%20a%20Paso%29.md), en esta misma carpeta, y el [`README.md`](../README.md) de la raíz |
+| Código de cada patrón (versión educativa, uno por semana) | [`Documentacion/Semana 2`](../Semana%202) a [`Semana 6`](../Semana%206) |
+| Código del proyecto **total integrado** (los 5 patrones conectados entre sí, no solo demos aisladas) | [`plataforma-energia-app/backend/`](../../plataforma-energia-app/backend) — `plataforma.py` (Singleton) usa `factory_method.py` (Factory Method), `notificaciones.py` (Abstract Factory), `reportes.py` (Builder) y tiene `clonar_dispositivo()` (Prototype) |
+| Instrucciones de ejecución | [`Como Ejecutar el Proyecto (Guia Paso a Paso).md`](Como%20Ejecutar%20el%20Proyecto%20%28Guia%20Paso%20a%20Paso%29.md), en esta misma carpeta, y el [`README.md`](../../README.md) de la raíz |
 | Validación de las pruebas dispuestas en el informe | 115 pruebas automatizadas con `pytest` (24 por patrón, más 19 de Singleton) — ver el paso "Ejecutar las pruebas" en la guía de ejecución |
 
 ## Checklist rápido antes de entregar
