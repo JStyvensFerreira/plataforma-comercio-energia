@@ -340,6 +340,51 @@
           </div>
         </div>
       </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h3>Dispositivos conectados</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Tipo</th><th>Usuario</th><th>Umbral mín.</th><th>Umbral máx.</th></tr></thead>
+          <tbody>
+            <tr v-for="d in dispositivos" :key="d.id">
+              <td>{{d.id}}</td><td>{{d.tipo}}</td><td>{{d.usuario_id}}</td>
+              <td>{{ d.umbral_min ?? '—' }}</td><td>{{ d.umbral_max ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-if="!dispositivos.length">Todavía no hay dispositivos conectados.</div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h3>Clonar dispositivo calibrado <span class="badge">Prototype</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Copia un dispositivo <b>ya calibrado</b> (mismos umbrales) en vez de crear uno
+          nuevo con los valores por defecto del tipo. Deja los umbrales en blanco para
+          conservar exactamente los del original, o ajusta solo el que necesites.
+        </div>
+        <label>Dispositivo a clonar</label>
+        <select v-model="clonForm.origen">
+          <option disabled value="">Selecciona dispositivo</option>
+          <option v-for="d in dispositivos" :key="d.id" :value="d.id">
+            {{ d.id }} ({{ d.tipo }}, {{ d.umbral_min ?? '—' }} a {{ d.umbral_max ?? '—' }})
+          </option>
+        </select>
+        <label>ID del dispositivo nuevo</label>
+        <input v-model="clonForm.nuevo_id" placeholder="panel-02" />
+        <div class="row-inline">
+          <div>
+            <label>Umbral mín. (opcional)</label>
+            <input type="number" v-model.number="clonForm.umbral_min" step="0.1" placeholder="igual al original" />
+          </div>
+          <div>
+            <label>Umbral máx. (opcional)</label>
+            <input type="number" v-model.number="clonForm.umbral_max" step="0.1" placeholder="igual al original" />
+          </div>
+        </div>
+        <button class="btn" @click="clonarDispositivo" :disabled="!clonForm.origen || !clonForm.nuevo_id">
+          Clonar dispositivo
+        </button>
+      </div>
     </section>
 
     <!-- HISTORIAL -->
@@ -466,6 +511,7 @@ createApp({
       compraForm: { cantidad_kwh: 5, precio_kwh: 0.18 },
       dispositivoForm: { id: '', tipo: 'panel_solar' },
       dispositivoSeleccionado: '',
+      clonForm: { origen: '', nuevo_id: '', umbral_min: null, umbral_max: null },
       lecturasActuales: [],
       prediccion: null,
       notificaciones: [],
@@ -669,6 +715,21 @@ createApp({
         const data = await r.json();
         this.prediccion = data.prediccion_kwh;
       }catch(e){ this.mostrarToast('Error al predecir', true); }
+    },
+    async clonarDispositivo(){
+      try{
+        const cuerpo = { nuevo_id: this.clonForm.nuevo_id };
+        if(typeof this.clonForm.umbral_min === 'number') cuerpo.umbral_min = this.clonForm.umbral_min;
+        if(typeof this.clonForm.umbral_max === 'number') cuerpo.umbral_max = this.clonForm.umbral_max;
+        const r = await this.peticionProtegida(`/iot/dispositivos/${this.clonForm.origen}/clonar`, {
+          method:'POST', body: JSON.stringify(cuerpo)
+        });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo clonar');
+        this.mostrarToast(`Clonado: ${data.id} (umbral ${data.umbral_min ?? '—'} a ${data.umbral_max ?? '—'})`);
+        this.clonForm = { origen: this.clonForm.origen, nuevo_id: '', umbral_min: null, umbral_max: null };
+        this.cargarDispositivos();
+      }catch(e){ this.mostrarToast(e.message || 'Error al clonar dispositivo', true); }
     },
   }
 }).mount('#app');
