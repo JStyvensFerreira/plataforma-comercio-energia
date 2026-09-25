@@ -15,6 +15,7 @@ import random
 
 from factory_method import DispositivoIoT, crear_dispositivo
 from notificaciones import Mensaje, crear_servicio, obtener_canal
+from pagos import obtener_pasarela
 from reportes import DatosReporte, DirectorReportes, crear_builder
 
 
@@ -40,6 +41,7 @@ class Usuario:
     canal_notificacion: str = "email"  # "email" | "sms" | "push"
     email: str = ""
     telefono: str = ""
+    pasarela_pago: str = "stripe"  # "stripe" | "payu"
 
     def to_dict(self):
         return {
@@ -49,6 +51,7 @@ class Usuario:
             "canal_notificacion": self.canal_notificacion,
             "email": self.email,
             "telefono": self.telefono,
+            "pasarela_pago": self.pasarela_pago,
         }
 
     def destino_para(self, canal: str) -> str:
@@ -87,6 +90,8 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         self.lecturas_iot: dict[str, list[float]] = {}
         # Bandeja de notificaciones por usuario (patrón Abstract Factory).
         self.notificaciones: dict[str, list[dict]] = {}
+        # Bandeja de pagos por usuario (patrón Adapter).
+        self.pagos: dict[str, list[dict]] = {}
         self._contador_ordenes = itertools.count(1)
 
     def registrar_usuario(
@@ -97,8 +102,10 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         canal_notificacion: str = "email",
         email: str = "",
         telefono: str = "",
+        pasarela_pago: str = "stripe",
     ) -> Usuario:
         obtener_canal(canal_notificacion)  # valida el canal antes de crear el usuario
+        obtener_pasarela(pasarela_pago)  # valida la pasarela antes de crear el usuario
         return self.usuarios.setdefault(
             id_,
             Usuario(
@@ -108,6 +115,7 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                 canal_notificacion=canal_notificacion,
                 email=email,
                 telefono=telefono,
+                pasarela_pago=pasarela_pago,
             ),
         )
 
@@ -149,6 +157,31 @@ class PlataformaEnergia(metaclass=SingletonMeta):
 
     def bandeja_notificaciones(self, usuario_id: str) -> list[dict]:
         return list(self.notificaciones.get(usuario_id, []))
+
+    # ---------- Cobro de transacciones (patrón Adapter) ----------
+    def cambiar_pasarela_pago(self, usuario_id: str, pasarela: str) -> Usuario:
+        obtener_pasarela(pasarela)  # ValueError si no existe
+        usuario = self.usuarios[usuario_id]
+        usuario.pasarela_pago = pasarela
+        return usuario
+
+    def _cobrar_transaccion(self, tx: dict) -> dict:
+        """
+        Cobra el total de la transacción al comprador usando SU pasarela de
+        pago preferida (patrón Adapter): la plataforma solo conoce la
+        interfaz PasarelaPago, nunca el SDK concreto de Stripe ni de PayU.
+        """
+        comprador = self.usuarios.get(tx["comprador"])
+        nombre_pasarela = comprador.pasarela_pago if comprador else "stripe"
+        resultado = obtener_pasarela(nombre_pasarela).procesar_pago(
+            tx["comprador"], tx["total"], f"Compra de {tx['cantidad_kwh']} kWh"
+        )
+        registro = asdict(resultado)
+        self.pagos.setdefault(tx["comprador"], []).append(registro)
+        return registro
+
+    def bandeja_pagos(self, usuario_id: str) -> list[dict]:
+        return list(self.pagos.get(usuario_id, []))
 
     # ---------- Reporte energético (patrón Builder) ----------
     def _recolectar_datos_reporte(self, usuario_id: str) -> DatosReporte:
@@ -244,6 +277,9 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                     }
                     transacciones.append(tx)
                     self.historial_transacciones.append(tx)
+
+                    # Cobro al comprador por SU pasarela (Adapter).
+                    tx["pago"] = self._cobrar_transaccion(tx)
 
                     # Aviso a las dos partes por SU canal (Abstract Factory).
                     for usuario_id, rol in ((tx["comprador"], "comprador"), (tx["vendedor"], "vendedor")):

@@ -213,6 +213,7 @@
     <button :class="{active: tab==='iot'}" @click="tab='iot'">IoT &amp; Predicción</button>
     <button :class="{active: tab==='historial'}" @click="tab='historial'">Historial</button>
     <button :class="{active: tab==='notificaciones'}" @click="tab='notificaciones'; cargarNotificaciones()">Notificaciones</button>
+    <button :class="{active: tab==='pagos'}" @click="tab='pagos'; cargarPagos()">Pagos</button>
   </nav>
 
   <main v-if="usuarioActual">
@@ -483,6 +484,41 @@
       </div>
     </section>
 
+    <!-- PAGOS (patrón Adapter) -->
+    <section v-if="tab==='pagos'">
+      <div class="card" style="margin-bottom:18px;">
+        <h3>Tu pasarela de pago <span class="badge">Adapter</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Cuando ganas una compra en la subasta, la plataforma te cobra el total con
+          la pasarela que elijas. Stripe y PayU tienen SDKs incompatibles entre sí
+          (centavos en inglés vs. pesos en español); un <b>adaptador</b> distinto
+          traduce cada uno a la misma interfaz interna, así que la plataforma nunca
+          conoce el SDK concreto.
+        </div>
+        <select v-model="pasarelaPago">
+          <option value="stripe">Stripe — cobra en centavos (USD)</option>
+          <option value="payu">PayU — cobra en pesos (COP)</option>
+        </select>
+        <button class="btn" @click="cambiarPasarela">Guardar pasarela</button>
+      </div>
+
+      <div class="card">
+        <h3>Historial de pagos ({{ pagos.length }})</h3>
+        <table>
+          <thead><tr><th>Pasarela</th><th>Monto</th><th>Estado</th><th>ID transacción externa</th></tr></thead>
+          <tbody>
+            <tr v-for="(p, i) in [...pagos].reverse()" :key="i">
+              <td><span class="badge">{{ p.pasarela }}</span></td>
+              <td>${{ p.monto }}</td>
+              <td :style="{color: p.exitoso ? 'var(--green)' : 'var(--red)'}">{{ p.exitoso ? 'Exitoso' : 'Rechazado' }}</td>
+              <td class="mono helper">{{ p.id_transaccion_externa }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-if="!pagos.length">Sin pagos todavía. Gana una compra en la subasta (pestaña Mercado) para ver un cobro aquí.</div>
+      </div>
+    </section>
+
   </main>
 
   <div class="toast" :class="{error: toast.error}" v-if="toast.msg">{{ toast.msg }}</div>
@@ -515,6 +551,8 @@ createApp({
       lecturasActuales: [],
       prediccion: null,
       notificaciones: [],
+      pagos: [],
+      pasarelaPago: 'stripe',
       canalNotificacion: 'email',
       formatoReporte: 'detallado',
       reporteGenerado: null,
@@ -556,6 +594,7 @@ createApp({
       this.token = data.access_token;
       this.usuarioActual = data.usuario;
       this.canalNotificacion = data.usuario.canal_notificacion || 'email';
+      this.pasarelaPago = data.usuario.pasarela_pago || 'stripe';
       this.contacto = {
         email: data.usuario.email || '',
         telefono: data.usuario.telefono || '',
@@ -619,6 +658,25 @@ createApp({
         localStorage.setItem('voltia_usuario', JSON.stringify(u));
         this.mostrarToast('Canal actualizado a ' + u.canal_notificacion);
       }catch(e){ this.mostrarToast('Error al cambiar el canal', true); }
+    },
+    async cargarPagos(){
+      if(!this.token) return;
+      try{
+        const r = await this.peticionProtegida('/pagos');
+        if(r.ok) this.pagos = await r.json();
+      }catch(e){}
+    },
+    async cambiarPasarela(){
+      try{
+        const r = await this.peticionProtegida('/usuarios/me/pasarela', {
+          method:'PUT', body: JSON.stringify({ pasarela: this.pasarelaPago })
+        });
+        if(!r.ok) throw new Error();
+        const u = await r.json();
+        this.usuarioActual = u;
+        localStorage.setItem('voltia_usuario', JSON.stringify(u));
+        this.mostrarToast('Pasarela actualizada a ' + u.pasarela_pago);
+      }catch(e){ this.mostrarToast('Error al cambiar la pasarela', true); }
     },
     async guardarContacto(){
       try{
@@ -686,7 +744,7 @@ createApp({
         const r = await fetch(this.apiBase + '/subasta/ejecutar', { method:'POST' });
         const nuevas = await r.json();
         this.mostrarToast(nuevas.length ? `Subasta ejecutada: ${nuevas.length} transacción(es)` : 'Subasta ejecutada: sin cruces posibles');
-        await Promise.all([this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones()]);
+        await Promise.all([this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarPagos()]);
       }catch(e){ this.mostrarToast('Error al ejecutar la subasta', true); }
     },
     async crearDispositivo(){

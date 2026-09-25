@@ -33,10 +33,15 @@ Documentacion/
 │   ├── builder.py
 │   ├── test_builder.py
 │   └── conftest.py
-└── Semana 6/                        # Prototype
-    ├── Patron Prototype.md
-    ├── prototype.py
-    ├── test_prototype.py
+├── Semana 6/                        # Prototype
+│   ├── Patron Prototype.md
+│   ├── prototype.py
+│   ├── test_prototype.py
+│   └── conftest.py
+└── Semana 7/                        # Adapter
+    ├── Patron Adapter.md
+    ├── adapter.py
+    ├── test_adapter.py
     └── conftest.py
 ```
 
@@ -51,6 +56,7 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Abstract Factory | 4 | [`Patron Abstract Factory.md`](Semana%204/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%204/abstract_factory.py) | [`test_abstract_factory.py`](Semana%204/test_abstract_factory.py) | [`UML_AbstractFactory.png`](Semana%204/UML_AbstractFactory.png) |
 | Builder | 5 | [`Patron Builder.md`](Semana%205/Patron%20Builder.md) | [`builder.py`](Semana%205/builder.py) | [`test_builder.py`](Semana%205/test_builder.py) | [`UML_Builder.png`](Semana%205/UML_Builder.png) |
 | Prototype | 6 | [`Patron Prototype.md`](Semana%206/Patron%20Prototype.md) | [`prototype.py`](Semana%206/prototype.py) | [`test_prototype.py`](Semana%206/test_prototype.py) | — |
+| Adapter | 7 | [`Patron Adapter.md`](Semana%207/Patron%20Adapter.md) | [`adapter.py`](Semana%207/adapter.py) | [`test_adapter.py`](Semana%207/test_adapter.py) | — |
 
 ## Cómo ejecutar
 
@@ -78,13 +84,14 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Documentacion\Semana 2\test_singleton.py ..................              [ 15%]
-Documentacion\Semana 3\test_factory_method.py ................           [ 29%]
-Documentacion\Semana 4\test_abstract_factory.py ........................ [ 50%]
-Documentacion\Semana 5\test_builder.py ..............................    [ 79%]
-Documentacion\Semana 6\test_prototype.py ........................        [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [ 13%]
+Documentacion\Semana 3\test_factory_method.py ................           [ 25%]
+Documentacion\Semana 4\test_abstract_factory.py ........................ [ 43%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 68%]
+Documentacion\Semana 6\test_prototype.py ........................        [ 87%]
+Documentacion\Semana 7\test_adapter.py .................                 [100%]
 
-115 passed
+132 passed
 ```
 
 ---
@@ -228,3 +235,31 @@ que las demás fábricas del proyecto.
 | P-18 | `test_plantilla_inexistente_lanza_value_error_con_las_disponibles` | Plantilla desconocida → `ValueError` con las disponibles |
 | P-19 | `test_registrar_una_plantilla_guarda_una_copia_no_la_referencia` | Modificar el original tras registrarlo no altera la plantilla guardada |
 | P-20 | `test_dos_plantillas_distintas_producen_clones_independientes` | Dos plantillas registradas producen clones del tipo correcto cada una |
+
+## Casos de prueba — Adapter
+
+Verifica que la plataforma puede cobrar con distintas pasarelas externas de
+interfaz incompatible (Stripe, PayU) programando solo contra `PasarelaPago`,
+que cada adaptador traduce correctamente la llamada al SDK concreto y su
+respuesta al contrato uniforme `ResultadoPago`, y que el registro de
+pasarelas resuelve por nombre con el mismo contrato que las demás fábricas
+del proyecto.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| AD-01 | `test_adaptador_stripe_implementa_pasarela_pago` / `test_adaptador_payu_implementa_pasarela_pago` | Ambos adaptadores implementan la interfaz `PasarelaPago` |
+| AD-02 | `test_no_se_puede_instanciar_la_interfaz_abstracta` | `PasarelaPago` abstracta → `TypeError` |
+| AD-03 | `test_ambos_adaptadores_devuelven_resultadopago` | Los dos adaptadores devuelven el mismo objeto de valor `ResultadoPago` |
+| AD-04 | `test_convierte_el_monto_a_centavos_para_el_sdk` | `AdaptadorStripe` traduce el monto a centavos antes de llamar al SDK |
+| AD-05 | `test_marca_exitoso_cuando_el_sdk_confirma_el_cargo` | El resultado queda `exitoso=True` cuando Stripe confirma el cargo |
+| AD-06 | `test_expone_el_id_de_transaccion_del_sdk` | El `id_transaccion_externa` viene del `StripeCharge` real (`ch_...`) |
+| AD-07 | `test_identifica_la_pasarela_como_stripe` | El resultado indica `pasarela="stripe"` |
+| AD-08 | `test_envia_el_monto_en_pesos_sin_convertir` | `AdaptadorPayU` no convierte el monto (a diferencia de Stripe) |
+| AD-09 | `test_marca_exitoso_cuando_el_sdk_aprueba` | El resultado queda `exitoso=True` cuando PayU aprueba |
+| AD-10 | `test_expone_el_id_de_orden_del_sdk` | El `id_transaccion_externa` viene del `ordenId` de PayU (`PAYU-...`) |
+| AD-11 | `test_identifica_la_pasarela_como_payu` | El resultado indica `pasarela="payu"` |
+| AD-12 | `test_marca_no_exitoso_si_el_sdk_rechaza` | Un estado distinto de `APPROVED` en PayU se traduce a `exitoso=False` |
+| AD-13 | `test_devuelve_el_adaptador_correcto_por_nombre` | `obtener_pasarela(nombre)` retorna el adaptador esperado |
+| AD-14 | `test_pasarela_no_soportada_lanza_value_error_con_las_disponibles` | Pasarela desconocida → `ValueError` con las disponibles |
+| AD-15 | `test_pasarelas_disponibles_coincide_con_el_registro` | `PASARELAS_DISPONIBLES` refleja el registro de adaptadores |
+| AD-16 | `test_se_puede_agregar_una_pasarela_sin_modificar_las_existentes` | Un `AdaptadorFalso` nuevo funciona con la interfaz `PasarelaPago` sin tocar nada (abierto/cerrado) |
