@@ -18,7 +18,8 @@ Documentacion/
 ├── Semana 3/            # patrón Factory Method
 ├── Semana 4/            # patrón Abstract Factory
 ├── Semana 5/            # patrón Builder
-└── Semana 6/            # patrón Prototype
+├── Semana 6/            # patrón Prototype
+└── Semana 7/            # patrón Adapter
 ```
 
 El documento Word y la contextualización también están en [`Documentacion/`](Documentacion/).

@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from factory_method import TIPOS_DISPONIBLES
 from notificaciones import CANALES_DISPONIBLES
+from pagos import PASARELAS_DISPONIBLES
 from plataforma import PlataformaEnergia
 from reportes import FORMATOS_DISPONIBLES
 
@@ -52,6 +53,7 @@ class RegistroIn(BaseModel):
     canal_notificacion: str = "email"  # "email" | "sms" | "push"
     email: str = ""
     telefono: str = ""
+    pasarela_pago: str = "stripe"  # "stripe" | "payu"
 
 
 class LoginIn(BaseModel):
@@ -83,6 +85,10 @@ class LecturaIn(BaseModel):
 
 class CanalIn(BaseModel):
     canal: str
+
+
+class PasarelaIn(BaseModel):
+    pasarela: str
 
 
 class ContactoIn(BaseModel):
@@ -133,11 +139,13 @@ def registro(datos: RegistroIn):
         raise HTTPException(400, "El usuario ya existe")
     if datos.canal_notificacion not in CANALES_DISPONIBLES:
         raise HTTPException(400, f"Canal inválido. Disponibles: {', '.join(CANALES_DISPONIBLES)}")
+    if datos.pasarela_pago not in PASARELAS_DISPONIBLES:
+        raise HTTPException(400, f"Pasarela inválida. Disponibles: {', '.join(PASARELAS_DISPONIBLES)}")
     email, telefono = validar_contacto(datos.email, datos.telefono)
     password_hash = bcrypt.hashpw(datos.password.encode(), bcrypt.gensalt()).decode()
     usuario = plataforma.registrar_usuario(
         datos.id, datos.nombre, password_hash, datos.canal_notificacion,
-        email or "", telefono or "",
+        email or "", telefono or "", datos.pasarela_pago,
     )
     return {"access_token": crear_token(usuario.id), "token_type": "bearer", "usuario": usuario.to_dict()}
 
@@ -289,6 +297,26 @@ def actualizar_contacto(datos: ContactoIn, usuario_id: str = Depends(usuario_act
     email, telefono = validar_contacto(datos.email, datos.telefono)
     usuario = plataforma.actualizar_contacto(usuario_id, email, telefono)
     return usuario.to_dict()
+
+
+# ---------- Pagos (patrón Adapter) ----------
+@app.get("/pagos/pasarelas")
+def listar_pasarelas():
+    """Pasarelas de pago soportadas (un adaptador concreto por pasarela)."""
+    return {"pasarelas": list(PASARELAS_DISPONIBLES)}
+
+
+@app.get("/pagos")
+def mis_pagos(usuario_id: str = Depends(usuario_actual)):
+    """Bandeja de pagos del usuario autenticado, ya en el formato uniforme del Adapter."""
+    return plataforma.bandeja_pagos(usuario_id)
+
+
+@app.put("/usuarios/me/pasarela")
+def cambiar_pasarela(datos: PasarelaIn, usuario_id: str = Depends(usuario_actual)):
+    if datos.pasarela not in PASARELAS_DISPONIBLES:
+        raise HTTPException(400, f"Pasarela inválida. Disponibles: {', '.join(PASARELAS_DISPONIBLES)}")
+    return plataforma.cambiar_pasarela_pago(usuario_id, datos.pasarela).to_dict()
 
 
 # ---------- Reporte energético (patrón Builder) ----------
