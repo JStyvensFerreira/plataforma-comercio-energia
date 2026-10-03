@@ -214,6 +214,7 @@
     <button :class="{active: tab==='historial'}" @click="tab='historial'">Historial</button>
     <button :class="{active: tab==='notificaciones'}" @click="tab='notificaciones'; cargarNotificaciones()">Notificaciones</button>
     <button :class="{active: tab==='pagos'}" @click="tab='pagos'; cargarPagos()">Pagos</button>
+    <button :class="{active: tab==='comunidad'}" @click="tab='comunidad'; cargarArbol()">Comunidad</button>
   </nav>
 
   <main v-if="usuarioActual">
@@ -286,6 +287,45 @@
           </tbody>
         </table>
         <div class="empty" v-if="!ordenes.ventas.length && !ordenes.compras.length">Aún no hay órdenes activas.</div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h3>Cotizador de precio final <span class="badge">Decorator</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Cada ajuste es un <b>decorador</b> que envuelve el costo anterior y le agrega su capa.
+          Se aplican <b>en el orden en que los marques</b>: prueba marcar «cargo por uso de red» antes y
+          después de un descuento para ver que el orden cambia el total.
+        </div>
+        <div class="row-inline">
+          <div>
+            <label>Cantidad (kWh)</label>
+            <input type="number" v-model.number="cotizacion.cantidad_kwh" min="0" step="0.1" />
+          </div>
+          <div>
+            <label>Precio ($/kWh)</label>
+            <input type="number" v-model.number="cotizacion.precio_kwh" min="0" step="0.01" />
+          </div>
+        </div>
+        <label>Ajustes</label>
+        <div v-for="a in ajustesDisponibles" :key="a.nombre" style="margin:4px 0;">
+          <label style="display:flex; align-items:center; gap:8px; margin:0; cursor:pointer;">
+            <input type="checkbox" style="width:auto; margin:0;"
+                   :checked="cotizacion.ajustes.includes(a.nombre)" @change="alternarAjuste(a.nombre)" />
+            <span>{{ a.etiqueta }}</span>
+            <span class="badge" v-if="cotizacion.ajustes.includes(a.nombre)">#{{ cotizacion.ajustes.indexOf(a.nombre) + 1 }}</span>
+          </label>
+        </div>
+        <button class="btn" @click="cotizar">Cotizar</button>
+
+        <table v-if="resultadoCotizacion" style="margin-top:14px;">
+          <thead><tr><th>Capa</th><th>Ajuste</th><th>Acumulado</th></tr></thead>
+          <tbody>
+            <tr v-for="(l, i) in resultadoCotizacion.desglose" :key="i">
+              <td style="font-family:Inter;">{{ l.concepto }}</td><td>{{ i > 0 ? ajuste(l.valor) : dinero(l.valor) }}</td><td>{{ dinero(l.acumulado) }}</td>
+            </tr>
+            <tr><td style="font-family:Inter;"><b>Total</b></td><td></td><td><b>{{ dinero(resultadoCotizacion.total) }}</b></td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -392,11 +432,22 @@
     <section v-if="tab==='historial'">
       <div class="card">
         <h3>Transacciones ejecutadas</h3>
+        <div class="helper" style="margin-bottom:8px;">
+          El total que se cobra es el subtotal envuelto por los ajustes que le corresponden
+          (patrón <b>Decorator</b>): descuento si el vendedor tiene panel solar, descuento si el
+          comprador es frecuente, recargo en hora pico (18:00–21:00), cargo por uso de red y comisión.
+        </div>
         <table>
-          <thead><tr><th>Vendedor</th><th>Comprador</th><th>Cantidad</th><th>Precio</th><th>Total</th></tr></thead>
+          <thead><tr><th>Vendedor</th><th>Comprador</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th>Ajustes</th><th>Total</th></tr></thead>
           <tbody>
             <tr v-for="(tx, i) in [...transacciones].reverse()" :key="i">
-              <td>{{tx.vendedor}}</td><td>{{tx.comprador}}</td><td>{{tx.cantidad_kwh}} kWh</td><td>${{tx.precio_kwh}}</td><td>${{tx.total}}</td>
+              <td>{{tx.vendedor}}</td><td>{{tx.comprador}}</td><td>{{tx.cantidad_kwh}} kWh</td><td>${{tx.precio_kwh}}</td>
+              <td>{{ dinero(tx.subtotal ?? tx.total) }}</td>
+              <td class="helper" style="font-family:Inter;">
+                <div v-for="(a, j) in (tx.ajustes || [])" :key="j">{{ a.concepto }}: {{ ajuste(a.valor) }}</div>
+                <span v-if="!(tx.ajustes || []).length">—</span>
+              </td>
+              <td>{{ dinero(tx.total) }}</td>
             </tr>
           </tbody>
         </table>
@@ -519,6 +570,53 @@
       </div>
     </section>
 
+    <!-- COMUNIDAD (patrón Composite) -->
+    <section v-if="tab==='comunidad'">
+      <div class="grid cols-3" style="margin-bottom:18px;" v-if="arbol">
+        <div class="card">
+          <h3>Producción de la comunidad</h3>
+          <div class="big amber">{{ arbol.produccion_kwh }} kWh</div>
+        </div>
+        <div class="card">
+          <h3>Consumo de la comunidad</h3>
+          <div class="big teal">{{ arbol.consumo_kwh }} kWh</div>
+        </div>
+        <div class="card">
+          <h3>Balance ({{ arbol.dispositivos }} dispositivos)</h3>
+          <div class="big" :style="{color: arbol.balance_kwh >= 0 ? 'var(--green)' : 'var(--red)'}">{{ arbol.balance_kwh }} kWh</div>
+          <div class="helper">Promedio por dispositivo: {{ arbol.promedio_balance_por_dispositivo }} kWh</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="margin:0;">Árbol energético <span class="badge">Composite</span></h3>
+          <button class="btn ghost" style="margin-top:0;" @click="cargarArbol">Actualizar</button>
+        </div>
+        <div class="helper" style="margin:8px 0;">
+          Comunidad → Hogar → Dispositivo. Cada fila se calcula con la <b>misma operación</b>:
+          un dispositivo (hoja) suma sus lecturas y un hogar o la comunidad (grupo) delega en sus hijos.
+          Simula lecturas en «IoT &amp; Predicción» y actualiza para ver cómo suben los totales por nivel.
+        </div>
+        <table v-if="arbol">
+          <thead><tr><th>Nodo</th><th>Nivel</th><th>Dispositivos</th><th>Producción</th><th>Consumo</th><th>Balance</th></tr></thead>
+          <tbody>
+            <tr v-for="(f, i) in filasArbol" :key="i">
+              <td :style="{paddingLeft: (8 + f.profundidad * 22) + 'px', fontFamily: 'Inter', fontWeight: f.hijos.length ? 600 : 400}">
+                {{ f.profundidad ? '└ ' : '' }}{{ f.nombre }}
+              </td>
+              <td><span class="badge">{{ f.tipo || f.nivel }}</span></td>
+              <td>{{ f.dispositivos }}</td>
+              <td>{{ f.produccion_kwh }} kWh</td>
+              <td>{{ f.consumo_kwh }} kWh</td>
+              <td :style="{color: f.balance_kwh >= 0 ? 'var(--green)' : 'var(--red)'}">{{ f.balance_kwh }} kWh</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-else>Cargando árbol…</div>
+      </div>
+    </section>
+
   </main>
 
   <div class="toast" :class="{error: toast.error}" v-if="toast.msg">{{ toast.msg }}</div>
@@ -558,6 +656,10 @@ createApp({
       reporteGenerado: null,
       reporteFormato: '',
       contacto: { email: '', telefono: '' },
+      arbol: null,
+      ajustesDisponibles: [],
+      cotizacion: { cantidad_kwh: 10, precio_kwh: 0.20, ajustes: [] },
+      resultadoCotizacion: null,
       toast: { msg: '', error: false },
     }
   },
@@ -565,6 +667,16 @@ createApp({
     tickerItems(){
       const items = this.transacciones.slice(-8);
       return items.concat(items); // loop duplicado para el efecto ticker
+    },
+    filasArbol(){
+      // Aplana el árbol del Composite en filas con su profundidad, para la tabla.
+      const filas = [];
+      const recorrer = (nodo, profundidad) => {
+        filas.push({ ...nodo, profundidad });
+        nodo.hijos.forEach(h => recorrer(h, profundidad + 1));
+      };
+      if(this.arbol) recorrer(this.arbol, 0);
+      return filas;
     },
     authFormValido(){
       if(!this.authForm.id || !this.authForm.password) return false;
@@ -638,7 +750,32 @@ createApp({
       return r;
     },
     async refrescarTodo(){
-      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones()]);
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes()]);
+    },
+    async cargarArbol(){
+      try{ this.arbol = await (await fetch(this.apiBase + '/comunidad/arbol')).json(); }catch(e){}
+    },
+    async cargarAjustes(){
+      try{ this.ajustesDisponibles = (await (await fetch(this.apiBase + '/precios/ajustes')).json()).ajustes; }catch(e){}
+    },
+    dinero(v){ return (v < 0 ? '-' : '') + '$' + Math.abs(v).toFixed(2); },
+    ajuste(v){ return (v > 0 ? '+' : '') + this.dinero(v); },
+    alternarAjuste(nombre){
+      // Conserva el orden en que se marcan: es el orden de envoltura de los decoradores.
+      const lista = this.cotizacion.ajustes;
+      this.cotizacion.ajustes = lista.includes(nombre) ? lista.filter(n => n !== nombre) : [...lista, nombre];
+      this.resultadoCotizacion = null;
+    },
+    async cotizar(){
+      try{
+        const r = await fetch(this.apiBase + '/precios/cotizar', {
+          method:'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.cotizacion)
+        });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || '');
+        this.resultadoCotizacion = data;
+      }catch(e){ this.mostrarToast(e.message || 'Error al cotizar', true); }
     },
     async cargarNotificaciones(){
       if(!this.token) return;

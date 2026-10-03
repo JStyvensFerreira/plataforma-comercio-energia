@@ -19,7 +19,8 @@ Documentacion/
 ├── Semana 4/            # patrón Abstract Factory
 ├── Semana 5/            # patrón Builder
 ├── Semana 6/            # patrón Prototype
-└── Semana 7/            # patrón Adapter
+├── Semana 7/            # patrón Adapter
+└── Semana 8/            # patrones Composite y Decorator
 ```
 
 El documento Word y la contextualización también están en [`Documentacion/`](Documentacion/).

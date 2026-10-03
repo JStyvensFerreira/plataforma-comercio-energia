@@ -14,9 +14,16 @@ import itertools
 import random
 
 from factory_method import DispositivoIoT, crear_dispositivo
+from jerarquia import DispositivoHoja, GrupoEnergetico
 from notificaciones import Mensaje, crear_servicio, obtener_canal
 from pagos import obtener_pasarela
+from precios import CostoBase, CostoEnergia, aplicar_ajustes
 from reportes import DatosReporte, DirectorReportes, crear_builder
+
+# Política de precios (patrón Decorator): franja de hora pico y número de
+# compras previas a partir del cual un comprador se considera frecuente.
+HORA_PICO = range(18, 21)  # 18:00 a 20:59
+COMPRAS_COMPRADOR_FRECUENTE = 3
 
 
 class SingletonMeta(type):
@@ -183,6 +190,57 @@ class PlataformaEnergia(metaclass=SingletonMeta):
     def bandeja_pagos(self, usuario_id: str) -> list[dict]:
         return list(self.pagos.get(usuario_id, []))
 
+    # ---------- Precio final de la transacción (patrón Decorator) ----------
+    def _ajustes_para(self, comprador: str, vendedor: str, momento: datetime) -> list[str]:
+        """
+        Decide QUÉ capas aplicar a una transacción y en qué orden: primero
+        los descuentos, luego los recargos, luego el cargo fijo y al final la
+        comisión de la plataforma. Cómo se calcula cada capa lo resuelve su
+        decorador en precios.py.
+        """
+        ajustes = []
+        if any(d.usuario_id == vendedor and d.tipo == "panel_solar" for d in self.dispositivos.values()):
+            ajustes.append("renovable")
+        compras_previas = sum(1 for tx in self.historial_transacciones if tx["comprador"] == comprador)
+        if compras_previas >= COMPRAS_COMPRADOR_FRECUENTE:
+            ajustes.append("frecuente")
+        if momento.hour in HORA_PICO:
+            ajustes.append("hora_pico")
+        ajustes += ["uso_red", "comision"]
+        return ajustes
+
+    def _calcular_costo(
+        self, cantidad_kwh: float, precio_kwh: float, comprador: str, vendedor: str, momento: datetime
+    ) -> CostoEnergia:
+        """Envuelve el costo base con las capas que le corresponden (Decorator)."""
+        return aplicar_ajustes(
+            CostoBase(cantidad_kwh, precio_kwh), self._ajustes_para(comprador, vendedor, momento)
+        )
+
+    def cotizar(self, cantidad_kwh: float, precio_kwh: float, ajustes: list[str]) -> dict:
+        """Simula el precio con los ajustes elegidos, en el orden elegido."""
+        base = CostoBase(cantidad_kwh, precio_kwh)
+        costo = aplicar_ajustes(base, ajustes)
+        return {"subtotal": base.total(), "total": costo.total(), "desglose": costo.desglose()}
+
+    # ---------- Árbol energético de la comunidad (patrón Composite) ----------
+    def arbol_energetico(self) -> GrupoEnergetico:
+        """
+        Arma el árbol Comunidad → Hogar (un usuario) → Dispositivo (hoja) con el
+        estado actual del Singleton. Producción, consumo y balance de cualquier
+        nivel se obtienen con la misma llamada: cada grupo delega en sus hijos.
+        """
+        comunidad = GrupoEnergetico("Comunidad Voltia", "comunidad")
+        hogares: dict[str, GrupoEnergetico] = {}
+        for usuario in self.usuarios.values():
+            hogares[usuario.id] = GrupoEnergetico(f"Hogar de {usuario.nombre}", "hogar")
+            comunidad.agregar(hogares[usuario.id])
+        for disp in self.dispositivos.values():
+            hogar = hogares.get(disp.usuario_id)
+            if hogar is not None:
+                hogar.agregar(DispositivoHoja(disp.id, disp.tipo, self.lecturas_iot.get(disp.id, [])))
+        return comunidad
+
     # ---------- Reporte energético (patrón Builder) ----------
     def _recolectar_datos_reporte(self, usuario_id: str) -> DatosReporte:
         """
@@ -267,13 +325,20 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                     compra.cantidad_kwh -= cantidad
                     venta.cantidad_kwh -= cantidad
 
+                    # Precio final = costo base + capas de ajuste (Decorator).
+                    momento = datetime.now()
+                    costo = self._calcular_costo(
+                        cantidad, precio_final, compra.usuario_id, venta.usuario_id, momento
+                    )
                     tx = {
                         "comprador": compra.usuario_id,
                         "vendedor": venta.usuario_id,
                         "cantidad_kwh": cantidad,
                         "precio_kwh": precio_final,
-                        "total": round(cantidad * precio_final, 2),
-                        "timestamp": datetime.now().isoformat(),
+                        "subtotal": round(cantidad * precio_final, 2),
+                        "total": costo.total(),
+                        "ajustes": costo.desglose()[1:],
+                        "timestamp": momento.isoformat(),
                     }
                     transacciones.append(tx)
                     self.historial_transacciones.append(tx)
