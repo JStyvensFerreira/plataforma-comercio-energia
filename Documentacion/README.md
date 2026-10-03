@@ -38,11 +38,22 @@ Documentacion/
 │   ├── prototype.py
 │   ├── test_prototype.py
 │   └── conftest.py
-└── Semana 7/                        # Adapter
-    ├── Patron Adapter.md
-    ├── adapter.py
-    ├── test_adapter.py
-    └── conftest.py
+├── Semana 7/                        # Adapter
+│   ├── Patron Adapter.md
+│   ├── UML_Adapter.png
+│   ├── adapter.py
+│   ├── test_adapter.py
+│   └── conftest.py
+└── Semana 8/                        # Composite + Decorator
+    ├── Patron Composite.md
+    ├── Patron Decorator.md
+    ├── UML_Composite.png
+    ├── UML_Decorator.png
+    ├── composite.py
+    ├── decorator.py
+    ├── test_composite.py
+    ├── test_decorator.py
+    └── conftest.py                  # compartido por los dos patrones
 ```
 
 Cada carpeta incluye además el **diagrama UML de clases** del patrón (generado a
@@ -56,7 +67,9 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Abstract Factory | 4 | [`Patron Abstract Factory.md`](Semana%204/Patron%20Abstract%20Factory.md) | [`abstract_factory.py`](Semana%204/abstract_factory.py) | [`test_abstract_factory.py`](Semana%204/test_abstract_factory.py) | [`UML_AbstractFactory.png`](Semana%204/UML_AbstractFactory.png) |
 | Builder | 5 | [`Patron Builder.md`](Semana%205/Patron%20Builder.md) | [`builder.py`](Semana%205/builder.py) | [`test_builder.py`](Semana%205/test_builder.py) | [`UML_Builder.png`](Semana%205/UML_Builder.png) |
 | Prototype | 6 | [`Patron Prototype.md`](Semana%206/Patron%20Prototype.md) | [`prototype.py`](Semana%206/prototype.py) | [`test_prototype.py`](Semana%206/test_prototype.py) | — |
-| Adapter | 7 | [`Patron Adapter.md`](Semana%207/Patron%20Adapter.md) | [`adapter.py`](Semana%207/adapter.py) | [`test_adapter.py`](Semana%207/test_adapter.py) | — |
+| Adapter | 7 | [`Patron Adapter.md`](Semana%207/Patron%20Adapter.md) | [`adapter.py`](Semana%207/adapter.py) | [`test_adapter.py`](Semana%207/test_adapter.py) | [`UML_Adapter.png`](Semana%207/UML_Adapter.png) |
+| Composite | 8 | [`Patron Composite.md`](Semana%208/Patron%20Composite.md) | [`composite.py`](Semana%208/composite.py) | [`test_composite.py`](Semana%208/test_composite.py) | [`UML_Composite.png`](Semana%208/UML_Composite.png) |
+| Decorator | 8 | [`Patron Decorator.md`](Semana%208/Patron%20Decorator.md) | [`decorator.py`](Semana%208/decorator.py) | [`test_decorator.py`](Semana%208/test_decorator.py) | [`UML_Decorator.png`](Semana%208/UML_Decorator.png) |
 
 ## Cómo ejecutar
 
@@ -84,14 +97,16 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Documentacion\Semana 2\test_singleton.py ..................              [ 13%]
-Documentacion\Semana 3\test_factory_method.py ................           [ 25%]
-Documentacion\Semana 4\test_abstract_factory.py ........................ [ 43%]
-Documentacion\Semana 5\test_builder.py ..............................    [ 68%]
-Documentacion\Semana 6\test_prototype.py ........................        [ 87%]
-Documentacion\Semana 7\test_adapter.py .................                 [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [ 10%]
+Documentacion\Semana 3\test_factory_method.py ................           [ 19%]
+Documentacion\Semana 4\test_abstract_factory.py ........................ [ 32%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 50%]
+Documentacion\Semana 6\test_prototype.py ........................        [ 64%]
+Documentacion\Semana 7\test_adapter.py .................                 [ 74%]
+Documentacion\Semana 8\test_composite.py .....................           [ 86%]
+Documentacion\Semana 8\test_decorator.py ........................        [100%]
 
-132 passed
+177 passed
 ```
 
 ---
@@ -263,3 +278,66 @@ del proyecto.
 | AD-14 | `test_pasarela_no_soportada_lanza_value_error_con_las_disponibles` | Pasarela desconocida → `ValueError` con las disponibles |
 | AD-15 | `test_pasarelas_disponibles_coincide_con_el_registro` | `PASARELAS_DISPONIBLES` refleja el registro de adaptadores |
 | AD-16 | `test_se_puede_agregar_una_pasarela_sin_modificar_las_existentes` | Un `AdaptadorFalso` nuevo funciona con la interfaz `PasarelaPago` sin tocar nada (abierto/cerrado) |
+
+## Casos de prueba — Composite
+
+Verifica que hojas (dispositivos) y grupos (hogar, edificio, comunidad)
+comparten la interfaz `NodoEnergetico`, que cada grupo resuelve
+producción/consumo/balance delegando recursivamente en sus hijos a cualquier
+profundidad, que el cliente puede tratar igual a una hoja y a un grupo, y que
+la estructura se protege de ciclos y de hijos duplicados.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| CO-01 | `test_no_se_puede_instanciar_el_componente_abstracto` | `NodoEnergetico` abstracto → `TypeError` |
+| CO-02 | `test_hoja_y_grupo_implementan_nodo_energetico` | `DispositivoHoja` y `GrupoEnergetico` implementan la interfaz común |
+| CO-03 | `test_el_cliente_trata_igual_a_una_hoja_y_a_un_grupo` | La misma función cliente funciona sobre una hoja y sobre un grupo |
+| CO-04 | `test_produccion_suma_solo_lecturas_positivas` | La hoja cuenta como producción solo las lecturas positivas |
+| CO-05 | `test_consumo_suma_el_valor_absoluto_de_las_negativas` | La hoja cuenta como consumo el valor absoluto de las negativas |
+| CO-06 | `test_hoja_sin_lecturas_tiene_todo_en_cero` | Una hoja sin lecturas da `0.0` en todo |
+| CO-07 | `test_una_hoja_cuenta_como_un_dispositivo` | `cantidad_dispositivos()` de una hoja = 1 |
+| CO-08 | `test_una_hoja_no_admite_operaciones_de_hijos` | `agregar`/`eliminar`/`obtener_hijo` en una hoja → `TypeError` (variante transparente) |
+| CO-09 | `test_grupo_vacio_tiene_todo_en_cero` | Un grupo sin hijos da `0.0` y 0 dispositivos |
+| CO-10 | `test_el_grupo_suma_a_sus_hijos_directos` | El grupo suma la producción/consumo de sus hijos |
+| CO-11 | `test_la_recursion_llega_a_cualquier_profundidad` | Comunidad → Edificio → Apto → hojas + Comunidad → Casa → hoja (profundidad variable) |
+| CO-12 | `test_cantidad_de_dispositivos_cuenta_solo_las_hojas` | Los grupos no cuentan como dispositivos |
+| CO-13 | `test_eliminar_un_hijo_actualiza_los_totales_de_los_ancestros` | Quitar una hoja se refleja en todos los niveles superiores |
+| CO-14 | `test_eliminar_un_nodo_ajeno_lanza_value_error` | Eliminar un nodo que no es hijo → `ValueError` |
+| CO-15 | `test_obtener_hijo_devuelve_el_hijo_por_indice` | `obtener_hijo(i)` devuelve el hijo correcto |
+| CO-16 | `test_promedio_se_calcula_con_los_totales_no_promediando_promedios` | Promedio = balance total / dispositivos totales |
+| CO-17 | `test_to_dict_refleja_el_arbol_anidado` | La serialización conserva el árbol completo |
+| CO-18 | `test_un_grupo_no_puede_agregarse_a_si_mismo` | Autorreferencia → `ValueError` (ciclo) |
+| CO-19 | `test_no_se_puede_agregar_un_ancestro_como_hijo` | Agregar un ancestro → `ValueError` (ciclo) |
+| CO-20 | `test_no_se_puede_agregar_dos_veces_el_mismo_hijo` | Hijo duplicado → `ValueError` |
+| CO-21 | `test_se_puede_agregar_un_tipo_de_hoja_sin_modificar_el_composite` | Una `EstacionCarga` nueva funciona dentro de un grupo sin tocar nada (abierto/cerrado) |
+
+## Casos de prueba — Decorator
+
+Verifica que cada ajuste de precio envuelve a otro `CostoEnergia` compartiendo
+su interfaz, que delega en el componente y añade su propia capa, que los
+ajustes se apilan en tiempo de ejecución en cualquier combinación sin modificar
+el objeto base, que el orden de aplicación importa, y que el registro resuelve
+los ajustes por nombre con el mismo contrato que las demás fábricas del proyecto.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| D-01 | `test_no_se_puede_instanciar_el_componente_abstracto` | `CostoEnergia` abstracto → `TypeError` |
+| D-02 | `test_base_y_decoradores_implementan_costo_energia` | Base y decoradores comparten la interfaz |
+| D-03 | `test_el_decorador_base_solo_delega` | `AjusteCosto` sin capa propia devuelve el mismo total |
+| D-04 | `test_total_es_cantidad_por_precio` | `CostoBase` = `cantidad_kwh x precio_kwh` |
+| D-05 | `test_desglose_tiene_una_sola_linea` | El costo base tiene una sola línea de desglose |
+| D-06 | `test_cada_ajuste_modifica_el_total` (x5) | Cada decorador concreto aplica su valor sobre $2.00 |
+| D-07 | `test_cada_ajuste_agrega_una_linea_al_desglose` | Cada capa agrega su línea al desglose |
+| D-08 | `test_los_ajustes_se_apilan` | Renovable → hora pico → comisión: 2.00 → 1.80 → 2.07 → 2.17 |
+| D-09 | `test_el_desglose_sigue_el_orden_de_envoltura` | Las líneas salen en el orden en que se envolvió |
+| D-10 | `test_el_ultimo_acumulado_coincide_con_el_total` | El acumulado final del desglose = `total()` |
+| D-11 | `test_decorar_no_modifica_el_objeto_base` | El `CostoBase` no cambia al ser decorado |
+| D-12 | `test_el_mismo_ajuste_se_puede_aplicar_dos_veces` | Un decorador puede repetirse en la cadena |
+| D-13 | `test_el_decorado_no_es_el_objeto_base` | Desventaja "identidad del objeto": el decorado no es el base, pero lo referencia |
+| D-14 | `test_el_orden_de_los_ajustes_importa` | `uso_red → renovable` ≠ `renovable → uso_red` |
+| D-15 | `test_cinco_clases_cubren_las_32_combinaciones` | 5 decoradores generan las 2⁵ = 32 combinaciones sin subclases |
+| D-16 | `test_devuelve_la_clase_decoradora_por_nombre` | `obtener_ajuste(nombre)` retorna el decorador esperado |
+| D-17 | `test_ajuste_no_soportado_lanza_value_error_con_los_disponibles` | Ajuste desconocido → `ValueError` con los disponibles |
+| D-18 | `test_ajustes_disponibles_coincide_con_el_registro` | `AJUSTES_DISPONIBLES` refleja el registro |
+| D-19 | `test_sin_ajustes_devuelve_el_mismo_costo_base` | `aplicar_ajustes(base, [])` devuelve el mismo objeto |
+| D-20 | `test_se_puede_agregar_un_ajuste_sin_modificar_los_existentes` | Un `SubsidioEstrato` nuevo se apila con los existentes sin tocar nada (abierto/cerrado) |

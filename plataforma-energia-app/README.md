@@ -8,6 +8,10 @@ real:
   SMS / push) es una fábrica que crea la familia completa de avisos de ese canal.
 - **Builder** (`reportes.py`) — el reporte energético se construye paso a paso, y
   el mismo proceso produce distintas representaciones (dict, objeto, texto).
+- **Composite** (`jerarquia.py`) — árbol Comunidad → Hogar → Dispositivo; cada
+  nivel calcula producción, consumo y balance con la misma operación recursiva.
+- **Decorator** (`precios.py`) — el precio final de una transacción es el costo
+  base envuelto por capas de ajuste (descuentos, recargos, cargo fijo, comisión).
 
 ## Estructura
 
@@ -17,6 +21,8 @@ plataforma-energia-app/
 │   ├── plataforma.py       # Lógica de dominio (Singleton PlataformaEnergia)
 │   ├── notificaciones.py    # Canales de notificación (Abstract Factory)
 │   ├── reportes.py          # Construcción del reporte energético (Builder)
+│   ├── jerarquia.py         # Árbol energético de la comunidad (Composite)
+│   ├── precios.py           # Ajustes al precio de una transacción (Decorator)
 │   ├── main.py              # API FastAPI que expone los patrones
 │   └── requirements.txt
 └── frontend/
@@ -54,7 +60,9 @@ Al abrirlo, confirma que el campo de la API (arriba a la derecha) diga
 3. Haz clic en **"Ejecutar subasta"** → se genera una transacción
 4. **Notificaciones** → cada usuario ve el aviso de la operación **con el formato de su canal** (Ana un push con payload, Luis un SMS ≤ 160). Cambia tu canal y genera un reporte para verlo.
 5. **IoT & Predicción** → conecta un panel solar, simula lecturas; si alguna cae fuera del rango normal del dispositivo, llega una **alerta IoT** por tu canal.
-6. **Historial** → revisa las transacciones cerradas
+6. **Historial** → revisa las transacciones cerradas: cada una muestra el subtotal, las capas de ajuste aplicadas (Decorator) y el total cobrado
+7. **Comunidad** → mira el árbol Comunidad → Hogar → Dispositivo con la producción, el consumo y el balance de cada nivel (Composite)
+8. **Mercado → Cotizador** → marca ajustes en distinto orden y compara el total (Decorator)
 
 ## Por qué el Abstract Factory aquí
 
@@ -88,6 +96,32 @@ el builder del formato pedido:
 Agregar un formato (Markdown, PDF) es un builder concreto más, sin tocar el
 Director ni los demás. Endpoints: `POST /reportes/generar?formato=…`,
 `GET /reportes/formatos`.
+
+## Por qué el Composite aquí
+
+La energía de la plataforma es naturalmente jerárquica: la comunidad tiene
+hogares (uno por usuario) y cada hogar tiene sus dispositivos IoT. En
+`plataforma.py`, `arbol_energetico()` arma ese árbol con `GrupoEnergetico`
+(composite) y `DispositivoHoja` (hoja) desde el estado del Singleton. Producción,
+consumo y balance se piden igual a un panel solar que a la comunidad entera: cada
+grupo delega en sus hijos. Agregar un nivel nuevo (edificio, barrio) es solo
+anidar otro grupo, sin escribir código de suma por nivel.
+
+Endpoint: `GET /comunidad/arbol` (pestaña **Comunidad**).
+
+## Por qué el Decorator aquí
+
+Al cerrar una transacción, el total que se cobra no es solo `cantidad x precio`:
+se le aplican capas según el contexto. `_ajustes_para()` decide cuáles y en qué
+orden (descuento renovable si el vendedor tiene panel solar, descuento si el
+comprador es frecuente, recargo en hora pico 18:00–21:00, cargo por uso de red y
+comisión), y `_calcular_costo()` envuelve el `CostoBase` con esos decoradores.
+La transacción guarda `subtotal`, `ajustes` y `total`, y ese `total` es el que
+cobra la pasarela (Adapter). Con 5 decoradores se cubren las 32 combinaciones
+sin una clase por combinación.
+
+Endpoints: `GET /precios/ajustes`, `POST /precios/cotizar` (Cotizador en la
+pestaña **Mercado**).
 
 ## Autenticación
 

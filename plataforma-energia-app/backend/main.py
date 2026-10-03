@@ -21,6 +21,7 @@ from factory_method import TIPOS_DISPONIBLES
 from notificaciones import CANALES_DISPONIBLES
 from pagos import PASARELAS_DISPONIBLES
 from plataforma import PlataformaEnergia
+from precios import AJUSTES_DISPONIBLES, obtener_ajuste
 from reportes import FORMATOS_DISPONIBLES
 
 app = FastAPI(title="Plataforma de Comercio de Energía", version="1.0.0")
@@ -94,6 +95,12 @@ class PasarelaIn(BaseModel):
 class ContactoIn(BaseModel):
     email: str | None = None
     telefono: str | None = None
+
+
+class CotizacionIn(BaseModel):
+    cantidad_kwh: float
+    precio_kwh: float
+    ajustes: list[str] = []  # en el orden en que se aplican
 
 
 # ---------- Validación de datos de contacto ----------
@@ -317,6 +324,43 @@ def cambiar_pasarela(datos: PasarelaIn, usuario_id: str = Depends(usuario_actual
     if datos.pasarela not in PASARELAS_DISPONIBLES:
         raise HTTPException(400, f"Pasarela inválida. Disponibles: {', '.join(PASARELAS_DISPONIBLES)}")
     return plataforma.cambiar_pasarela_pago(usuario_id, datos.pasarela).to_dict()
+
+
+# ---------- Precio final (patrón Decorator) ----------
+@app.get("/precios/ajustes")
+def listar_ajustes():
+    """Ajustes de precio disponibles (un decorador concreto por ajuste)."""
+    return {
+        "ajustes": [
+            {"nombre": nombre, "etiqueta": obtener_ajuste(nombre).etiqueta}
+            for nombre in AJUSTES_DISPONIBLES
+        ]
+    }
+
+
+@app.post("/precios/cotizar")
+def cotizar(datos: CotizacionIn):
+    """
+    Envuelve el costo base con los ajustes elegidos, en el orden recibido
+    (patrón Decorator), y devuelve el total con su desglose capa por capa.
+    """
+    try:
+        return plataforma.cotizar(datos.cantidad_kwh, datos.precio_kwh, datos.ajustes)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ---------- Árbol energético (patrón Composite) ----------
+@app.get("/comunidad/arbol")
+def arbol_comunidad():
+    """
+    Comunidad → Hogar → Dispositivo: cada nivel expone producción, consumo y
+    balance calculados recursivamente con la misma interfaz (patrón Composite).
+    """
+    arbol = plataforma.arbol_energetico()
+    datos = arbol.to_dict()
+    datos["promedio_balance_por_dispositivo"] = arbol.promedio_balance_por_dispositivo()
+    return datos
 
 
 # ---------- Reporte energético (patrón Builder) ----------
