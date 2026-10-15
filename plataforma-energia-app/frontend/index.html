@@ -346,6 +346,39 @@
 
     <!-- IOT -->
     <section v-if="tab==='iot'">
+      <div class="card" style="margin-bottom:18px;">
+        <h3>Alta rápida de dispositivo <span class="badge">Facade</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Una sola llamada coordina conectar el dispositivo (Factory Method), simular sus
+          primeras lecturas y generar + enviar un reporte de bienvenida (Builder + Abstract
+          Factory) — el cliente no necesita conocer esos tres pasos por separado.
+        </div>
+        <div class="row-inline">
+          <div>
+            <label>ID del dispositivo</label>
+            <input v-model="onboardingForm.id" placeholder="panel-02" />
+          </div>
+          <div>
+            <label>Tipo</label>
+            <select v-model="onboardingForm.tipo">
+              <option value="panel_solar">Panel solar</option>
+              <option value="bateria">Batería</option>
+              <option value="medidor">Medidor</option>
+            </select>
+          </div>
+          <div>
+            <label>Lecturas iniciales</label>
+            <input type="number" v-model.number="onboardingForm.n_lecturas" min="0" max="20" />
+          </div>
+        </div>
+        <button class="btn" @click="altaRapida" :disabled="!onboardingForm.id">Conectar y activar</button>
+        <div v-if="onboardingResultado" class="helper" style="margin-top:10px;">
+          Listo: <b>{{ onboardingResultado.dispositivo.id }}</b> con
+          {{ onboardingResultado.lecturas.length }} lectura(s) iniciales y un reporte ya
+          enviado a tu bandeja de notificaciones.
+        </div>
+      </div>
+
       <div class="grid cols-2">
         <div class="card">
           <h3>Conectar dispositivo</h3>
@@ -370,6 +403,18 @@
           </select>
           <button class="btn secondary" @click="simularLecturas" :disabled="!dispositivoSeleccionado" style="margin-right:10px;">Simular 5 lecturas</button>
           <button class="btn ghost" @click="obtenerPrediccion" :disabled="!dispositivoSeleccionado">Predecir siguiente</button>
+
+          <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line);">
+            <label>Sincronizar por protocolo <span class="badge">Bridge</span></label>
+            <select v-model="protocoloSeleccionado">
+              <option v-for="p in protocolosDisponibles" :key="p" :value="p">{{ p }}</option>
+            </select>
+            <div class="helper" style="margin:4px 0 8px;">
+              <input type="checkbox" id="conReintentos" v-model="sincronizarConReintentos" style="width:auto; margin-right:6px;" />
+              <label for="conReintentos" style="display:inline; margin:0;">Con reintentos ante fallas (RefinedAbstraction)</label>
+            </div>
+            <button class="btn ghost" @click="sincronizarDispositivo" :disabled="!dispositivoSeleccionado">Sincronizar ahora</button>
+          </div>
 
           <div v-if="prediccion !== null" style="margin-top:16px;">
             <h3>Predicción (media móvil)</h3>
@@ -646,6 +691,11 @@ createApp({
       dispositivoForm: { id: '', tipo: 'panel_solar' },
       dispositivoSeleccionado: '',
       clonForm: { origen: '', nuevo_id: '', umbral_min: null, umbral_max: null },
+      protocolosDisponibles: [],
+      protocoloSeleccionado: 'simulado',
+      sincronizarConReintentos: false,
+      onboardingForm: { id: '', tipo: 'panel_solar', n_lecturas: 3 },
+      onboardingResultado: null,
       lecturasActuales: [],
       prediccion: null,
       notificaciones: [],
@@ -750,13 +800,39 @@ createApp({
       return r;
     },
     async refrescarTodo(){
-      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes()]);
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos()]);
     },
     async cargarArbol(){
       try{ this.arbol = await (await fetch(this.apiBase + '/comunidad/arbol')).json(); }catch(e){}
     },
     async cargarAjustes(){
       try{ this.ajustesDisponibles = (await (await fetch(this.apiBase + '/precios/ajustes')).json()).ajustes; }catch(e){}
+    },
+    async cargarProtocolos(){
+      try{ this.protocolosDisponibles = (await (await fetch(this.apiBase + '/iot/protocolos')).json()).protocolos; }catch(e){}
+    },
+    async sincronizarDispositivo(){
+      try{
+        const url = `/iot/dispositivos/${this.dispositivoSeleccionado}/sincronizar?protocolo=${this.protocoloSeleccionado}&con_reintentos=${this.sincronizarConReintentos}`;
+        const r = await fetch(this.apiBase + url, { method:'POST' });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'Error al sincronizar');
+        this.lecturasActuales = data.lecturas;
+        this.mostrarToast(`Sincronizado por ${data.protocolo}: ${data.valor_kwh} kWh`);
+      }catch(e){ this.mostrarToast(e.message || 'Error al sincronizar', true); }
+    },
+    async altaRapida(){
+      try{
+        const r = await this.peticionProtegida('/onboarding/dispositivo', {
+          method:'POST', body: JSON.stringify(this.onboardingForm)
+        });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'Error en el alta rápida');
+        this.onboardingResultado = data;
+        this.mostrarToast('Dispositivo ' + data.dispositivo.id + ' conectado y activado');
+        this.onboardingForm = { id: '', tipo: 'panel_solar', n_lecturas: 3 };
+        await Promise.all([this.cargarDispositivos(), this.cargarNotificaciones()]);
+      }catch(e){ this.mostrarToast(e.message || 'Error en el alta rápida', true); }
     },
     dinero(v){ return (v < 0 ? '-' : '') + '$' + Math.abs(v).toFixed(2); },
     ajuste(v){ return (v > 0 ? '+' : '') + this.dinero(v); },
