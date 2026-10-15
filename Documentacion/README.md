@@ -44,15 +44,23 @@ Documentacion/
 │   ├── adapter.py
 │   ├── test_adapter.py
 │   └── conftest.py
-└── Semana 8/                        # Composite + Decorator
-    ├── Patron Composite.md
-    ├── Patron Decorator.md
-    ├── UML_Composite.png
-    ├── UML_Decorator.png
-    ├── composite.py
-    ├── decorator.py
-    ├── test_composite.py
-    ├── test_decorator.py
+├── Semana 8/                        # Composite + Decorator
+│   ├── Patron Composite.md
+│   ├── Patron Decorator.md
+│   ├── UML_Composite.png
+│   ├── UML_Decorator.png
+│   ├── composite.py
+│   ├── decorator.py
+│   ├── test_composite.py
+│   ├── test_decorator.py
+│   └── conftest.py                  # compartido por los dos patrones
+└── Semana 9/                        # Bridge + Facade
+    ├── Patron Bridge.md
+    ├── Patron Facade.md
+    ├── bridge.py
+    ├── facade.py
+    ├── test_bridge.py
+    ├── test_facade.py
     └── conftest.py                  # compartido por los dos patrones
 ```
 
@@ -70,6 +78,8 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Adapter | 7 | [`Patron Adapter.md`](Semana%207/Patron%20Adapter.md) | [`adapter.py`](Semana%207/adapter.py) | [`test_adapter.py`](Semana%207/test_adapter.py) | [`UML_Adapter.png`](Semana%207/UML_Adapter.png) |
 | Composite | 8 | [`Patron Composite.md`](Semana%208/Patron%20Composite.md) | [`composite.py`](Semana%208/composite.py) | [`test_composite.py`](Semana%208/test_composite.py) | [`UML_Composite.png`](Semana%208/UML_Composite.png) |
 | Decorator | 8 | [`Patron Decorator.md`](Semana%208/Patron%20Decorator.md) | [`decorator.py`](Semana%208/decorator.py) | [`test_decorator.py`](Semana%208/test_decorator.py) | [`UML_Decorator.png`](Semana%208/UML_Decorator.png) |
+| Bridge | 9 | [`Patron Bridge.md`](Semana%209/Patron%20Bridge.md) | [`bridge.py`](Semana%209/bridge.py) | [`test_bridge.py`](Semana%209/test_bridge.py) | — |
+| Facade | 9 | [`Patron Facade.md`](Semana%209/Patron%20Facade.md) | [`facade.py`](Semana%209/facade.py) | [`test_facade.py`](Semana%209/test_facade.py) | — |
 
 ## Cómo ejecutar
 
@@ -97,16 +107,18 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Documentacion\Semana 2\test_singleton.py ..................              [ 10%]
-Documentacion\Semana 3\test_factory_method.py ................           [ 19%]
-Documentacion\Semana 4\test_abstract_factory.py ........................ [ 32%]
-Documentacion\Semana 5\test_builder.py ..............................    [ 50%]
-Documentacion\Semana 6\test_prototype.py ........................        [ 64%]
-Documentacion\Semana 7\test_adapter.py .................                 [ 74%]
-Documentacion\Semana 8\test_composite.py .....................           [ 86%]
-Documentacion\Semana 8\test_decorator.py ........................        [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [  9%]
+Documentacion\Semana 3\test_factory_method.py ................           [ 16%]
+Documentacion\Semana 4\test_abstract_factory.py ........................ [ 28%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 43%]
+Documentacion\Semana 6\test_prototype.py ........................        [ 55%]
+Documentacion\Semana 7\test_adapter.py .................                 [ 63%]
+Documentacion\Semana 8\test_composite.py .....................           [ 73%]
+Documentacion\Semana 8\test_decorator.py ........................        [ 85%]
+Documentacion\Semana 9\test_bridge.py ..................                 [ 94%]
+Documentacion\Semana 9\test_facade.py ............                       [100%]
 
-177 passed
+207 passed
 ```
 
 ---
@@ -341,3 +353,52 @@ los ajustes por nombre con el mismo contrato que las demás fábricas del proyec
 | D-18 | `test_ajustes_disponibles_coincide_con_el_registro` | `AJUSTES_DISPONIBLES` refleja el registro |
 | D-19 | `test_sin_ajustes_devuelve_el_mismo_costo_base` | `aplicar_ajustes(base, [])` devuelve el mismo objeto |
 | D-20 | `test_se_puede_agregar_un_ajuste_sin_modificar_los_existentes` | Un `SubsidioEstrato` nuevo se apila con los existentes sin tocar nada (abierto/cerrado) |
+
+## Casos de prueba — Bridge
+
+Verifica que `SincronizadorDispositivo` (Abstraction) se combina con
+cualquier `ProtocoloLectura` (Implementor) sin conocer su clase concreta,
+que `SincronizadorConReintentos` (RefinedAbstraction) reintenta ante fallas
+de comunicación independientemente del protocolo que tenga detrás, y que el
+registro de protocolos resuelve por nombre con el mismo contrato que las
+demás fábricas del proyecto.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| BR-01 | `test_sincronizador_funciona_con_protocolo_http` / `_mqtt` / `_simulado` | La Abstraction funciona igual con cualquier Implementor |
+| BR-02 | `test_el_mismo_sincronizador_puede_cambiar_de_protocolo_en_tiempo_de_ejecucion` | El protocolo se puede sustituir sin crear otro Sincronizador |
+| BR-03 | `test_no_se_puede_instanciar_el_implementor_abstracto` | `ProtocoloLectura` abstracto → `TypeError` |
+| BR-04 | `test_protocolo_http_lanza_connection_error_si_no_hay_dato` / `_mqtt_...` | Un protocolo sin dato configurado falla con `ConnectionError` |
+| BR-05 | `test_protocolo_simulado_devuelve_valor_por_defecto_si_no_esta_configurado` | `ProtocoloSimulado` tiene un valor por defecto |
+| BR-06 | `test_cada_protocolo_expone_su_nombre` | Cada Implementor concreto expone su `nombre` |
+| BR-07 | `test_devuelve_la_lectura_si_el_protocolo_no_falla` | Sin fallas, `SincronizadorConReintentos` usa 1 solo intento |
+| BR-08 | `test_reintenta_tras_una_falla_y_termina_devolviendo_el_valor` | Reintenta tras fallas y devuelve el valor en cuanto responde |
+| BR-09 | `test_agota_los_intentos_y_propaga_el_error` | Se agotan los intentos → se propaga el último `ConnectionError` |
+| BR-10 | `test_sin_reintentos_una_falla_se_propaga_de_inmediato` | `SincronizadorDispositivo` (sin reintentos) no reintenta |
+| BR-11 | `test_el_reintento_funciona_igual_con_cualquier_protocolo` | El reintento es independiente del Implementor concreto |
+| BR-12 | `test_devuelve_el_protocolo_correcto_por_nombre` | `obtener_protocolo(nombre)` retorna el Implementor esperado |
+| BR-13 | `test_protocolo_no_soportado_lanza_value_error_con_los_disponibles` | Protocolo desconocido → `ValueError` con los disponibles |
+| BR-14 | `test_protocolos_disponibles_coincide_con_el_registro` | `PROTOCOLOS_DISPONIBLES` refleja el registro |
+| BR-15 | `test_se_puede_agregar_un_protocolo_sin_modificar_los_existentes` | Un `ProtocoloFalso` nuevo funciona con la Abstraction sin tocar nada (abierto/cerrado) |
+
+## Casos de prueba — Facade
+
+Verifica que `OnboardingDispositivo` coordina los tres subsistemas (registro,
+simulación de lecturas y notificaciones) en el orden correcto y en una sola
+llamada, que el resultado consolida la información de los tres, y que los
+subsistemas se pueden seguir usando por separado sin pasar por la fachada.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| FA-01 | `test_conectar_y_activar_registra_el_dispositivo` | La fachada registra el dispositivo con sus datos |
+| FA-02 | `test_conectar_y_activar_simula_las_lecturas_pedidas` | Simula exactamente las lecturas pedidas |
+| FA-03 | `test_conectar_y_activar_deja_un_aviso_en_la_bandeja` | Deja un aviso de bienvenida en la bandeja |
+| FA-04 | `test_el_dispositivo_queda_registrado_en_el_subsistema_de_registro` | El subsistema de registro queda consistente tras la llamada |
+| FA-05 | `test_la_notificacion_queda_en_la_bandeja_del_usuario_correcto` | El aviso llega solo al usuario correcto |
+| FA-06 | `test_dos_altas_seguidas_no_se_mezclan` | Dos altas seguidas no contaminan sus datos |
+| FA-07 | `test_registro_dispositivos_funciona_sin_la_fachada` | El subsistema de registro se puede usar solo |
+| FA-08 | `test_simulador_lecturas_funciona_sin_la_fachada` | El subsistema de lecturas se puede usar solo |
+| FA-09 | `test_servicio_notificaciones_funciona_sin_la_fachada` | El subsistema de notificaciones se puede usar solo |
+| FA-10 | `test_la_fachada_acepta_subsistemas_inyectados` | La fachada acepta subsistemas externos por constructor |
+| FA-11 | `test_dos_fachadas_no_comparten_estado` | Dos instancias de la fachada no comparten subsistemas |
+| FA-12 | `test_simular_sin_pedir_lecturas_no_agrega_ninguna` | `n_lecturas=0` no agrega lecturas |

@@ -19,10 +19,12 @@ from pydantic import BaseModel
 
 from factory_method import TIPOS_DISPONIBLES
 from notificaciones import CANALES_DISPONIBLES
+from onboarding import OnboardingDispositivo
 from pagos import PASARELAS_DISPONIBLES
 from plataforma import PlataformaEnergia
 from precios import AJUSTES_DISPONIBLES, obtener_ajuste
 from reportes import FORMATOS_DISPONIBLES
+from sincronizacion import PROTOCOLOS_DISPONIBLES
 
 app = FastAPI(title="Plataforma de Comercio de Energía", version="1.0.0")
 
@@ -44,6 +46,10 @@ app.add_middleware(
 
 # Siempre la MISMA instancia (Singleton), sin importar cuántas veces se llame
 plataforma = PlataformaEnergia()
+
+# Fachada (patrón Facade): coordina conectar_dispositivo + simular_lecturas +
+# generar_reporte en una sola llamada para el alta rápida de un dispositivo.
+onboarding = OnboardingDispositivo(plataforma)
 
 
 # ---------- Esquemas de entrada ----------
@@ -78,6 +84,14 @@ class ClonarDispositivoIn(BaseModel):
     nuevo_id: str
     umbral_min: float | None = None
     umbral_max: float | None = None
+
+
+class OnboardingIn(BaseModel):
+    id: str
+    tipo: str
+    umbral_min: float | None = None
+    umbral_max: float | None = None
+    n_lecturas: int = 3
 
 
 class LecturaIn(BaseModel):
@@ -228,6 +242,22 @@ def listar_dispositivos():
     return [d.to_dict() for d in plataforma.dispositivos.values()]
 
 
+# ---------- Alta rápida (patrón Facade) ----------
+@app.post("/onboarding/dispositivo")
+def onboarding_dispositivo(datos: OnboardingIn, usuario_id: str = Depends(usuario_actual)):
+    """
+    Da de alta un dispositivo y lo deja listo para operar en una sola
+    llamada: lo conecta (Factory Method), simula sus primeras lecturas y
+    genera + envía un reporte de bienvenida (Builder + Abstract Factory).
+    """
+    try:
+        return onboarding.conectar_y_activar(
+            usuario_id, datos.id, datos.tipo, datos.umbral_min, datos.umbral_max, datos.n_lecturas
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @app.post("/iot/dispositivos/{dispositivo_id}/clonar")
 def clonar_dispositivo(
     dispositivo_id: str, datos: ClonarDispositivoIn, usuario_id: str = Depends(usuario_actual)
@@ -261,6 +291,29 @@ def simular(dispositivo_id: str, n: int = 5):
         raise HTTPException(404, "Dispositivo no encontrado")
     plataforma.simular_lecturas(dispositivo_id, n)
     return {"lecturas": plataforma.lecturas_iot[dispositivo_id]}
+
+
+# ---------- Sincronización por protocolo (patrón Bridge) ----------
+@app.get("/iot/protocolos")
+def listar_protocolos():
+    """Protocolos de lectura soportados (un Implementor concreto por protocolo)."""
+    return {"protocolos": list(PROTOCOLOS_DISPONIBLES)}
+
+
+@app.post("/iot/dispositivos/{dispositivo_id}/sincronizar")
+def sincronizar(dispositivo_id: str, protocolo: str = "simulado", con_reintentos: bool = False):
+    """
+    Obtiene una lectura nueva por el protocolo elegido (Bridge: la
+    plataforma no conoce la clase concreta del protocolo) y la registra
+    igual que cualquier otra lectura.
+    """
+    try:
+        valor = plataforma.sincronizar_dispositivo(dispositivo_id, protocolo, con_reintentos)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    except ConnectionError as e:
+        raise HTTPException(502, str(e))
+    return {"valor_kwh": valor, "protocolo": protocolo, "lecturas": plataforma.lecturas_iot[dispositivo_id]}
 
 
 @app.get("/iot/dispositivos/{dispositivo_id}/lecturas")

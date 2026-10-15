@@ -19,6 +19,7 @@ from notificaciones import Mensaje, crear_servicio, obtener_canal
 from pagos import obtener_pasarela
 from precios import CostoBase, CostoEnergia, aplicar_ajustes
 from reportes import DatosReporte, DirectorReportes, crear_builder
+from sincronizacion import SincronizadorConReintentos, SincronizadorDispositivo, obtener_protocolo
 
 # Política de precios (patrón Decorator): franja de hora pico y número de
 # compras previas a partir del cual un comprador se considera frecuente.
@@ -428,6 +429,29 @@ class PlataformaEnergia(metaclass=SingletonMeta):
     def simular_lecturas(self, id_dispositivo: str, n: int = 5) -> None:
         for _ in range(n):
             self.enviar_lectura_iot(id_dispositivo, round(random.uniform(0.5, 4.0), 2))
+
+    # ---------- Sincronización por protocolo (patrón Bridge) ----------
+    def sincronizar_dispositivo(
+        self, id_dispositivo: str, protocolo: str = "simulado", con_reintentos: bool = False
+    ) -> float:
+        """
+        Obtiene una lectura nueva usando el protocolo de comunicación
+        elegido (simulado/HTTP/MQTT) sin que el resto de la plataforma
+        conozca esa clase concreta, y la registra igual que cualquier otra
+        lectura (umbrales, alertas). `con_reintentos` envuelve la misma
+        Abstraction con la RefinedAbstraction que reintenta ante fallas.
+        """
+        if id_dispositivo not in self.dispositivos:
+            raise ValueError(f"Dispositivo {id_dispositivo} no está registrado")
+        dispositivo = self.dispositivos[id_dispositivo]
+        ultima = self.lecturas_iot[id_dispositivo][-1] if self.lecturas_iot[id_dispositivo] else None
+
+        impl = obtener_protocolo(protocolo)
+        sincronizador = SincronizadorConReintentos(impl) if con_reintentos else SincronizadorDispositivo(impl)
+        valor = sincronizador.sincronizar(dispositivo, ultima)
+
+        self.enviar_lectura_iot(id_dispositivo, valor)
+        return valor
 
     def predecir_siguiente_valor(self, id_dispositivo: str, ventana: int = 3) -> Optional[float]:
         lecturas = self.lecturas_iot.get(id_dispositivo, [])
