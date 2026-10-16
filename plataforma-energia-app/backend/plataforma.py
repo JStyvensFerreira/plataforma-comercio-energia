@@ -13,6 +13,7 @@ import copy
 import itertools
 import random
 
+from catalogo_dispositivos import fabrica_fichas
 from factory_method import DispositivoIoT, crear_dispositivo
 from jerarquia import DispositivoHoja, GrupoEnergetico
 from notificaciones import Mensaje, crear_servicio, obtener_canal
@@ -458,3 +459,11 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         if not lecturas:
             return None
         return round(mean(lecturas[-ventana:]), 2)
+
+    # ---------- Catálogo de tipos de dispositivo (patrón Flyweight) ----------
+    def ficha_tecnica(self, tipo: str) -> dict:
+        """Ficha compartida del tipo (no se guarda copiada en cada dispositivo)."""
+        return fabrica_fichas.obtener_ficha(tipo).to_dict()
+
+    def catalogo_dispositivos(self) -> list[dict]:
+        return [fabrica_fichas.obtener_ficha(t).to_dict() for t in fabrica_fichas.tipos_disponibles]

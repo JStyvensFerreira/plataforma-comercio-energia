@@ -21,7 +21,8 @@ Documentacion/
 ├── Semana 6/            # patrón Prototype
 ├── Semana 7/            # patrón Adapter
 ├── Semana 8/            # patrones Composite y Decorator
-└── Semana 9/            # patrones Bridge y Facade
+├── Semana 9/            # patrones Bridge y Facade
+└── Semana 10/           # patrones Flyweight y Proxy
 ```
 
 El documento Word y la contextualización también están en [`Documentacion/`](Documentacion/).

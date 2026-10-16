@@ -54,13 +54,25 @@ Documentacion/
 │   ├── test_composite.py
 │   ├── test_decorator.py
 │   └── conftest.py                  # compartido por los dos patrones
-└── Semana 9/                        # Bridge + Facade
-    ├── Patron Bridge.md
-    ├── Patron Facade.md
-    ├── bridge.py
-    ├── facade.py
-    ├── test_bridge.py
-    ├── test_facade.py
+├── Semana 9/                        # Bridge + Facade
+│   ├── Patron Bridge.md
+│   ├── Patron Facade.md
+│   ├── UML_Bridge.png
+│   ├── UML_Facade.png
+│   ├── bridge.py
+│   ├── facade.py
+│   ├── test_bridge.py
+│   ├── test_facade.py
+│   └── conftest.py                  # compartido por los dos patrones
+└── Semana 10/                       # Flyweight + Proxy
+    ├── Patron Flyweight.md
+    ├── Patron Proxy.md
+    ├── UML_Flyweight.png
+    ├── UML_Proxy.png
+    ├── flyweight.py
+    ├── proxy.py
+    ├── test_flyweight.py
+    ├── test_proxy.py
     └── conftest.py                  # compartido por los dos patrones
 ```
 
@@ -78,8 +90,10 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Adapter | 7 | [`Patron Adapter.md`](Semana%207/Patron%20Adapter.md) | [`adapter.py`](Semana%207/adapter.py) | [`test_adapter.py`](Semana%207/test_adapter.py) | [`UML_Adapter.png`](Semana%207/UML_Adapter.png) |
 | Composite | 8 | [`Patron Composite.md`](Semana%208/Patron%20Composite.md) | [`composite.py`](Semana%208/composite.py) | [`test_composite.py`](Semana%208/test_composite.py) | [`UML_Composite.png`](Semana%208/UML_Composite.png) |
 | Decorator | 8 | [`Patron Decorator.md`](Semana%208/Patron%20Decorator.md) | [`decorator.py`](Semana%208/decorator.py) | [`test_decorator.py`](Semana%208/test_decorator.py) | [`UML_Decorator.png`](Semana%208/UML_Decorator.png) |
-| Bridge | 9 | [`Patron Bridge.md`](Semana%209/Patron%20Bridge.md) | [`bridge.py`](Semana%209/bridge.py) | [`test_bridge.py`](Semana%209/test_bridge.py) | — |
-| Facade | 9 | [`Patron Facade.md`](Semana%209/Patron%20Facade.md) | [`facade.py`](Semana%209/facade.py) | [`test_facade.py`](Semana%209/test_facade.py) | — |
+| Bridge | 9 | [`Patron Bridge.md`](Semana%209/Patron%20Bridge.md) | [`bridge.py`](Semana%209/bridge.py) | [`test_bridge.py`](Semana%209/test_bridge.py) | [`UML_Bridge.png`](Semana%209/UML_Bridge.png) |
+| Facade | 9 | [`Patron Facade.md`](Semana%209/Patron%20Facade.md) | [`facade.py`](Semana%209/facade.py) | [`test_facade.py`](Semana%209/test_facade.py) | [`UML_Facade.png`](Semana%209/UML_Facade.png) |
+| Flyweight | 10 | [`Patron Flyweight.md`](Semana%2010/Patron%20Flyweight.md) | [`flyweight.py`](Semana%2010/flyweight.py) | [`test_flyweight.py`](Semana%2010/test_flyweight.py) | [`UML_Flyweight.png`](Semana%2010/UML_Flyweight.png) |
+| Proxy | 10 | [`Patron Proxy.md`](Semana%2010/Patron%20Proxy.md) | [`proxy.py`](Semana%2010/proxy.py) | [`test_proxy.py`](Semana%2010/test_proxy.py) | [`UML_Proxy.png`](Semana%2010/UML_Proxy.png) |
 
 ## Cómo ejecutar
 
@@ -107,18 +121,20 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Documentacion\Semana 2\test_singleton.py ..................              [  9%]
-Documentacion\Semana 3\test_factory_method.py ................           [ 16%]
-Documentacion\Semana 4\test_abstract_factory.py ........................ [ 28%]
-Documentacion\Semana 5\test_builder.py ..............................    [ 43%]
-Documentacion\Semana 6\test_prototype.py ........................        [ 55%]
-Documentacion\Semana 7\test_adapter.py .................                 [ 63%]
-Documentacion\Semana 8\test_composite.py .....................           [ 73%]
-Documentacion\Semana 8\test_decorator.py ........................        [ 85%]
-Documentacion\Semana 9\test_bridge.py ..................                 [ 94%]
-Documentacion\Semana 9\test_facade.py ............                       [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [  8%]
+Documentacion\Semana 3\test_factory_method.py ................           [ 15%]
+Documentacion\Semana 4\test_abstract_factory.py ........................ [ 27%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 40%]
+Documentacion\Semana 6\test_prototype.py ........................        [ 50%]
+Documentacion\Semana 7\test_adapter.py .................                 [ 58%]
+Documentacion\Semana 8\test_composite.py .....................           [ 67%]
+Documentacion\Semana 8\test_decorator.py ........................        [ 78%]
+Documentacion\Semana 9\test_bridge.py ..................                 [ 86%]
+Documentacion\Semana 9\test_facade.py ............                       [ 91%]
+Documentacion\Semana 10\test_flyweight.py .........                      [ 95%]
+Documentacion\Semana 10\test_proxy.py ............                       [100%]
 
-207 passed
+228 passed
 ```
 
 ---
@@ -402,3 +418,44 @@ subsistemas se pueden seguir usando por separado sin pasar por la fachada.
 | FA-10 | `test_la_fachada_acepta_subsistemas_inyectados` | La fachada acepta subsistemas externos por constructor |
 | FA-11 | `test_dos_fachadas_no_comparten_estado` | Dos instancias de la fachada no comparten subsistemas |
 | FA-12 | `test_simular_sin_pedir_lecturas_no_agrega_ninguna` | `n_lecturas=0` no agrega lecturas |
+
+## Casos de prueba — Flyweight
+
+Verifica que `FabricaFichasDispositivo` devuelve la MISMA instancia de
+`FichaTipoDispositivo` para un mismo tipo (identidad, no solo igualdad), que
+el contenido de la ficha es el correcto y es inmutable, y que el registro de
+tipos es el punto único de verdad (cada fábrica mantiene su propia caché).
+
+| # | Caso | Qué valida |
+|---|---|---|
+| FL-01 | `test_dos_consultas_del_mismo_tipo_devuelven_la_misma_instancia` | Misma instancia (`is`) para el mismo tipo |
+| FL-02 | `test_tipos_distintos_devuelven_instancias_distintas` | Tipos distintos → fichas distintas |
+| FL-03 | `test_muchos_dispositivos_del_mismo_tipo_comparten_una_sola_ficha` | 50 consultas del mismo tipo crean 1 sola ficha |
+| FL-04 | `test_la_ficha_trae_los_umbrales_del_tipo` | La ficha incluye los umbrales correctos del tipo |
+| FL-05 | `test_la_ficha_es_inmutable` | No se puede modificar un campo de la ficha |
+| FL-06 | `test_to_dict_expone_todos_los_campos` | `to_dict()` expone los 7 campos esperados |
+| FL-07 | `test_tipo_no_soportado_lanza_value_error_con_los_disponibles` | Tipo desconocido → `ValueError` con los disponibles |
+| FL-08 | `test_tipos_disponibles_coincide_con_el_catalogo` | `tipos_disponibles` refleja el catálogo |
+| FL-09 | `test_cada_fabrica_tiene_su_propia_cache` | Dos fábricas distintas no comparten instancias (sí valores) |
+
+## Casos de prueba — Proxy
+
+Verifica que `ReporteProxy` rechaza solicitudes de un reporte ajeno
+(Protection), que reutiliza un reporte reciente en vez de reconstruirlo
+(Caching), que cada intento queda auditado (Logging), y que el proxy y el
+objeto real comparten la misma interfaz `GeneradorReportes`.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| PX-01 | `test_el_dueno_puede_pedir_su_propio_reporte` | El propio usuario obtiene su reporte |
+| PX-02 | `test_otro_usuario_no_puede_pedir_un_reporte_ajeno` | Otro usuario → `PermissionError` |
+| PX-03 | `test_el_intento_denegado_no_llega_al_objeto_real` | Un intento denegado no invoca al RealSubject |
+| PX-04 | `test_la_segunda_solicitud_identica_no_reconstruye_el_reporte` | Segunda solicitud idéntica → servida desde caché |
+| PX-05 | `test_formatos_distintos_no_comparten_cache` | Formatos distintos no comparten entrada de caché |
+| PX-06 | `test_usuarios_distintos_no_comparten_cache` | Usuarios distintos no comparten entrada de caché |
+| PX-07 | `test_cache_vencida_reconstruye_el_reporte` | Con `ttl_segundos=0`, siempre reconstruye |
+| PX-08 | `test_cada_solicitud_queda_registrada` | Cada solicitud exitosa queda en `auditoria` |
+| PX-09 | `test_la_denegacion_tambien_queda_registrada` | Una denegación también queda en `auditoria` |
+| PX-10 | `test_el_acierto_de_cache_queda_registrado_distinto_de_generado` | El resultado distingue `generado` de `cache` |
+| PX-11 | `test_el_proxy_y_el_objeto_real_implementan_el_mismo_subject` | Proxy y RealSubject son ambos `GeneradorReportes` |
+| PX-12 | `test_no_se_puede_instanciar_el_subject_abstracto` | `GeneradorReportes` abstracto → `TypeError` |
