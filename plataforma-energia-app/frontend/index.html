@@ -428,6 +428,23 @@
       </div>
 
       <div class="card" style="margin-top:18px;">
+        <h3>Catálogo de tipos de dispositivo <span class="badge">Flyweight</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Una sola ficha técnica por <b>tipo</b> (compartida, no duplicada en cada dispositivo),
+          calculada una vez y reutilizada sin importar cuántos dispositivos de ese tipo existan.
+        </div>
+        <table>
+          <thead><tr><th>Tipo</th><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Umbral mín.</th><th>Umbral máx.</th></tr></thead>
+          <tbody>
+            <tr v-for="f in catalogoDispositivos" :key="f.tipo">
+              <td>{{ f.tipo }}</td><td>{{ f.nombre_amigable }}</td><td>{{ f.categoria }}</td>
+              <td>{{ f.unidad }}</td><td>{{ f.umbral_min }}</td><td>{{ f.umbral_max }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
         <h3>Dispositivos conectados</h3>
         <table>
           <thead><tr><th>ID</th><th>Tipo</th><th>Usuario</th><th>Umbral mín.</th><th>Umbral máx.</th></tr></thead>
@@ -547,6 +564,42 @@
           </div>
         </div>
         <pre v-else style="white-space:pre-wrap; font-size:13px;">{{ JSON.stringify(reporteGenerado, null, 2) }}</pre>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <h3>Reporte protegido <span class="badge">Proxy</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Pasa por <b>ReporteProxy</b>: solo tú puedes pedir tu reporte (si pones otro usuario
+          te lo niega con 403), una segunda solicitud idéntica en menos de 30s se sirve desde
+          caché en vez de reconstruirse, y cada intento queda auditado abajo.
+        </div>
+        <div class="row-inline">
+          <div>
+            <label>Usuario objetivo (prueba con otro para ver el rechazo)</label>
+            <input v-model="usuarioObjetivoReporte" :placeholder="usuarioActual.id" />
+          </div>
+          <div>
+            <label>Formato</label>
+            <select v-model="formatoReporte">
+              <option value="detallado">Detallado</option>
+              <option value="resumen">Resumen</option>
+              <option value="texto">Texto</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn ghost" @click="reporteSeguro">Solicitar reporte seguro</button>
+        <div v-if="reporteSeguroResultado" class="helper" style="margin-top:10px;">{{ reporteSeguroResultado }}</div>
+
+        <table style="margin-top:14px;">
+          <thead><tr><th>Solicitante</th><th>Usuario</th><th>Formato</th><th>Resultado</th><th>Cuándo</th></tr></thead>
+          <tbody>
+            <tr v-for="(a, i) in [...auditoriaReportes].reverse()" :key="i">
+              <td>{{ a.solicitante }}</td><td>{{ a.usuario }}</td><td>{{ a.formato }}</td>
+              <td>{{ a.resultado }}</td><td>{{ a.timestamp }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty" v-if="!auditoriaReportes.length">Sin solicitudes registradas todavía.</div>
       </div>
 
       <div class="card" style="margin-bottom:18px;">
@@ -696,6 +749,10 @@ createApp({
       sincronizarConReintentos: false,
       onboardingForm: { id: '', tipo: 'panel_solar', n_lecturas: 3 },
       onboardingResultado: null,
+      catalogoDispositivos: [],
+      usuarioObjetivoReporte: '',
+      reporteSeguroResultado: '',
+      auditoriaReportes: [],
       lecturasActuales: [],
       prediccion: null,
       notificaciones: [],
@@ -800,7 +857,32 @@ createApp({
       return r;
     },
     async refrescarTodo(){
-      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos()]);
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos(), this.cargarCatalogo(), this.cargarAuditoria()]);
+    },
+    async cargarCatalogo(){
+      try{ this.catalogoDispositivos = (await (await fetch(this.apiBase + '/iot/catalogo')).json()).catalogo; }catch(e){}
+    },
+    async cargarAuditoria(){
+      if(!this.token) return;
+      try{
+        const r = await this.peticionProtegida('/reportes/auditoria');
+        if(r.ok) this.auditoriaReportes = (await r.json()).auditoria;
+      }catch(e){}
+    },
+    async reporteSeguro(){
+      try{
+        const objetivo = this.usuarioObjetivoReporte || this.usuarioActual.id;
+        const url = `/reportes/seguro/${encodeURIComponent(objetivo)}?formato=${encodeURIComponent(this.formatoReporte)}`;
+        const r = await this.peticionProtegida(url);
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'Solicitud rechazada');
+        this.reporteSeguroResultado = 'Reporte obtenido para ' + objetivo + '.';
+        this.mostrarToast('Reporte seguro obtenido');
+      }catch(e){
+        this.reporteSeguroResultado = 'Rechazado: ' + (e.message || 'error');
+        this.mostrarToast(e.message || 'Solicitud rechazada', true);
+      }
+      this.cargarAuditoria();
     },
     async cargarArbol(){
       try{ this.arbol = await (await fetch(this.apiBase + '/comunidad/arbol')).json(); }catch(e){}

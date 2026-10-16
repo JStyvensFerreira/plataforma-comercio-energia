@@ -24,6 +24,7 @@ from pagos import PASARELAS_DISPONIBLES
 from plataforma import PlataformaEnergia
 from precios import AJUSTES_DISPONIBLES, obtener_ajuste
 from reportes import FORMATOS_DISPONIBLES
+from reportes_proxy import GeneradorReportesReal, ReporteProxy
 from sincronizacion import PROTOCOLOS_DISPONIBLES
 
 app = FastAPI(title="Plataforma de Comercio de Energía", version="1.0.0")
@@ -50,6 +51,10 @@ plataforma = PlataformaEnergia()
 # Fachada (patrón Facade): coordina conectar_dispositivo + simular_lecturas +
 # generar_reporte en una sola llamada para el alta rápida de un dispositivo.
 onboarding = OnboardingDispositivo(plataforma)
+
+# Proxy (patrón Proxy): protege, cachea y audita el acceso a generar_reporte
+# sin modificar PlataformaEnergia ni el Builder que arma el reporte.
+reportes_proxy = ReporteProxy(real=GeneradorReportesReal(plataforma))
 
 
 # ---------- Esquemas de entrada ----------
@@ -224,6 +229,25 @@ def listar_transacciones():
 def listar_tipos_dispositivo():
     """Tipos de dispositivo IoT soportados (una fábrica concreta por tipo)."""
     return {"tipos": list(TIPOS_DISPONIBLES)}
+
+
+# ---------- Catálogo de tipos de dispositivo (patrón Flyweight) ----------
+@app.get("/iot/catalogo")
+def catalogo_dispositivos():
+    """
+    Ficha técnica compartida por tipo (nombre, categoría, umbrales): se
+    calcula una sola vez por tipo y se reutiliza para cualquier cantidad de
+    dispositivos, sin duplicarla dentro de cada uno (patrón Flyweight).
+    """
+    return {"catalogo": plataforma.catalogo_dispositivos()}
+
+
+@app.get("/iot/dispositivos/{dispositivo_id}/ficha")
+def ficha_de_dispositivo(dispositivo_id: str):
+    dispositivo = plataforma.dispositivos.get(dispositivo_id)
+    if dispositivo is None:
+        raise HTTPException(404, f"Dispositivo {dispositivo_id} no está registrado")
+    return plataforma.ficha_tecnica(dispositivo.tipo)
 
 
 @app.post("/iot/dispositivos")
@@ -434,6 +458,33 @@ def generar_reporte(formato: str = "detallado", usuario_id: str = Depends(usuari
             400, f"Formato inválido. Disponibles: {', '.join(FORMATOS_DISPONIBLES)}"
         )
     return plataforma.generar_reporte(usuario_id, formato)
+
+
+# ---------- Acceso protegido al reporte (patrón Proxy) ----------
+@app.get("/reportes/seguro/{usuario_id}")
+def reporte_seguro(
+    usuario_id: str, formato: str = "resumen", solicitante_id: str = Depends(usuario_actual)
+):
+    """
+    Pide el reporte a través de ReporteProxy: solo el propio usuario puede
+    obtener su reporte (Protection Proxy), una solicitud repetida dentro de
+    los 30s reutiliza la última copia en vez de reconstruirla (Caching
+    Proxy), y cada intento queda en la auditoría (Logging Proxy).
+    """
+    if formato not in FORMATOS_DISPONIBLES:
+        raise HTTPException(
+            400, f"Formato inválido. Disponibles: {', '.join(FORMATOS_DISPONIBLES)}"
+        )
+    try:
+        return reportes_proxy.generar(solicitante_id, usuario_id, formato)
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+
+
+@app.get("/reportes/auditoria")
+def auditoria_reportes(solicitante_id: str = Depends(usuario_actual)):
+    """Registro de accesos al reporte protegido: quién pidió qué y con qué resultado."""
+    return {"auditoria": reportes_proxy.auditoria}
 
 
 @app.get("/estado")
