@@ -6,7 +6,7 @@
 <title>Voltex · Plataforma de Comercio de Energía</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="vendor/vue.global.prod.js"></script>
 <style>
   :root{
     --bg: #0A1420;
@@ -727,7 +727,8 @@ const { createApp } = Vue;
 createApp({
   data(){
     return {
-      apiBase: 'http://localhost:8000',
+      // Si la página la sirve el propio backend (ejecutable), la API está en el mismo origen
+      apiBase: location.pathname.startsWith('/app') ? location.origin : 'http://localhost:8000',
       apiOk: null,
       tab: 'mercado',
       token: localStorage.getItem('voltia_token') || null,

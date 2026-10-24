@@ -29,6 +29,13 @@ plataforma-energia-app/
     └── index.html           # Dashboard en Vue 3 (sin build, vía CDN)
 ```
 
+## 0. Ejecutable sin instalar nada (Windows)
+
+En [`Ejecutables/`](../Ejecutables/) está `Voltia-windows.exe`: al abrirlo levanta
+la API y abre el dashboard en el navegador (`http://127.0.0.1:8000/app/`), sin
+Python ni dependencias. Se genera con `python plataforma-energia-app/ejecutable/construir.py`
+(ver [`Ejecutables/README.md`](../Ejecutables/README.md)).
+
 ## 1. Levantar el backend (FastAPI)
 
 ```bash
