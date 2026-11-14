@@ -12,6 +12,20 @@ real:
   nivel calcula producción, consumo y balance con la misma operación recursiva.
 - **Decorator** (`precios.py`) — el precio final de una transacción es el costo
   base envuelto por capas de ajuste (descuentos, recargos, cargo fijo, comisión).
+- **Observer** (`eventos_mercado.py`) — el mercado avisa a sus observadores
+  (estadísticas del mercado, alertas de precio de cada usuario) cada vez que se
+  publica, ejecuta o cancela una orden.
+- **State** (`estados_orden.py`) — cada orden delega `ejecutar`/`cancelar` en su
+  estado (abierta → parcial → completada, o cancelada).
+- **Visitor** (`analisis_comunidad.py`) — análisis sobre el árbol del Composite
+  (huella de carbono, diagnóstico, exportar CSV) sin agregarle métodos.
+- **Iterator** (`recorrido_ordenes.py`) — el libro de órdenes entrega iteradores
+  (por llegada, prioridad precio-tiempo, filtrado por usuario) sin exponer sus
+  listas; la subasta recorre el de prioridad.
+- **Mediator** (`coordinacion_hogar.py`) — la central de energía del hogar
+  coordina panel solar, medidor, batería y mercado, que no se conocen entre sí.
+- **Memento** (`configuracion_hogar.py`) — la configuración del hogar guarda
+  instantáneas inmutables para deshacer y rehacer cambios.
 
 ## Estructura
 
@@ -23,6 +37,12 @@ plataforma-energia-app/
 │   ├── reportes.py          # Construcción del reporte energético (Builder)
 │   ├── jerarquia.py         # Árbol energético de la comunidad (Composite)
 │   ├── precios.py           # Ajustes al precio de una transacción (Decorator)
+│   ├── eventos_mercado.py   # Eventos del mercado y alertas de precio (Observer)
+│   ├── estados_orden.py     # Ciclo de vida de una orden (State)
+│   ├── analisis_comunidad.py # Análisis sobre el árbol energético (Visitor)
+│   ├── recorrido_ordenes.py # Recorridos del libro de órdenes (Iterator)
+│   ├── coordinacion_hogar.py # Central de energía del hogar (Mediator)
+│   ├── configuracion_hogar.py # Reglas del hogar con deshacer/rehacer (Memento)
 │   ├── main.py              # API FastAPI que expone los patrones
 │   └── requirements.txt
 └── frontend/
@@ -70,6 +90,12 @@ Al abrirlo, confirma que el campo de la API (arriba a la derecha) diga
 6. **Historial** → revisa las transacciones cerradas: cada una muestra el subtotal, las capas de ajuste aplicadas (Decorator) y el total cobrado
 7. **Comunidad** → mira el árbol Comunidad → Hogar → Dispositivo con la producción, el consumo y el balance de cada nivel (Composite)
 8. **Mercado → Cotizador** → marca ajustes en distinto orden y compara el total (Decorator)
+9. **Mercado → Alerta de precio** → con Luis suscríbete con máximo $0.16; con Ana publica una venta a $0.15: a Luis le llega «Alerta de precio» en Notificaciones (Observer). Las estadísticas del mercado se actualizan solas.
+10. **Mercado → Libro de órdenes** → cada orden muestra su estado; tras una subasta parcial queda `parcial`, y «Cancelar» la pasa a `cancelada` (un segundo intento responde 409). La tabla «Órdenes cerradas» muestra las transiciones (State)
+11. **Comunidad → Análisis** → elige huella de carbono, diagnóstico o exportar CSV (Visitor)
+12. **Mercado → Libro de órdenes → Recorrido** → cambia entre «Por llegada» y «Prioridad de subasta», y marca «Solo mis órdenes» (Iterator)
+13. **IoT** → conecta un dispositivo `bateria`; luego **Mi hogar → Central de energía** → coordina un intervalo con generación 9 y consumo 2: la batería se carga y lo que no cabe se publica como venta en el libro (Mediator)
+14. **Mi hogar → Reglas del hogar** → cambia el precio de venta o desactiva «Vender excedente», guarda, y usa Deshacer/Rehacer; la próxima coordinación usa la versión vigente (Memento)
 
 ## Por qué el Abstract Factory aquí
 
@@ -129,6 +155,73 @@ sin una clase por combinación.
 
 Endpoints: `GET /precios/ajustes`, `POST /precios/cotizar` (Cotizador en la
 pestaña **Mercado**).
+
+## Por qué el Observer aquí
+
+Cuando aparece una oferta de venta barata, un comprador quiere enterarse sin
+refrescar el libro de órdenes, y las estadísticas del mercado deben actualizarse
+con cada transacción. `PlataformaEnergia` tiene un `MercadoEventos` (Subject):
+`publicar_venta`, `publicar_compra`, `ejecutar_subasta` y `cancelar_orden` solo
+llaman `mercado.notificar(...)`, sin saber quién escucha. `EstadisticasMercado`
+está suscrito desde el arranque, y cada usuario suscribe su propia `AlertaPrecio`,
+que deja el aviso en su bandeja por su canal (Abstract Factory).
+
+Endpoints: `GET/POST/DELETE /mercado/alertas`, `GET /mercado/estadisticas`.
+
+## Por qué el State aquí
+
+Una orden no se comporta igual durante toda su vida: abierta o parcial se puede
+ejecutar o cancelar; completada o cancelada ya no. La clase `Orden` delega
+`ejecutar`, `cancelar` y `puede_negociar` en su estado (`estados_orden.py`), y es
+el estado el que decide la transición. La subasta ya no resta cantidades a mano:
+llama `orden.ejecutar(cantidad)`.
+
+Endpoints: `POST /ordenes/{id}/cancelar` (403 si no es tuya, 409 si su estado no
+lo permite), `GET /ordenes/historial`.
+
+## Por qué el Visitor aquí
+
+Sobre el árbol del Composite aparecen análisis nuevos (CO₂ evitado por hogar,
+hogares en déficit, exportar a CSV). En vez de agregarle un método por análisis a
+`DispositivoHoja` y `GrupoEnergetico`, cada nodo implementa `aceptar(visitante)` y
+cada análisis es un visitante en `analisis_comunidad.py`.
+
+Endpoints: `GET /comunidad/analisis`, `GET /comunidad/analisis/{analisis}`.
+
+## Por qué el Iterator aquí
+
+La subasta reordenaba en sitio (`sort`) las mismas listas que leían la API y el
+frontend. Ahora `LibroOrdenes` (`recorrido_ordenes.py`) envuelve esas listas y
+entrega iteradores: `IteradorLlegada`, `IteradorPrioridad` (montículo
+precio-tiempo, el que usa la subasta, que además se detiene apenas los precios
+dejan de cruzarse) e `IteradorFiltrado` (por usuario o solo negociables).
+
+Endpoint: `GET /ordenes?recorrido=llegada|prioridad&usuario=<id>`.
+
+## Por qué el Mediator aquí
+
+Para vender excedentes hay que coordinar lo que produce el panel, lo que consume
+la casa, lo que cabe en la batería y el precio del mercado. En vez de que cada
+componente llame a los demás, todos avisan a `CentralEnergiaHogar`
+(`coordinacion_hogar.py`), que carga/descarga la batería (10 kWh por cada
+dispositivo `bateria` del usuario, sin romper la reserva mínima) y publica la
+venta o la compra con las mismas funciones del mercado (así la orden tiene estado
+y dispara eventos). Sin kWh en la petición usa la última lectura de los paneles y
+medidores del usuario.
+
+Endpoint: `POST /hogar/coordinar`.
+
+## Por qué el Memento aquí
+
+Las reglas que usa la central (reserva mínima, precio de venta, precio máximo de
+compra, vender o no) deciden dinero real, así que cada cambio debe poder
+deshacerse. `ConfiguracionHogar` crea mementos inmutables de sí misma y
+`HistorialConfiguracion` los guarda en pilas de deshacer/rehacer (máximo 10
+versiones) sin abrirlos (`configuracion_hogar.py`).
+
+Endpoints: `GET/PUT /hogar/configuracion` (400 si el cambio es inválido o vacío),
+`POST /hogar/configuracion/deshacer` y `POST /hogar/configuracion/rehacer` (409 si
+no hay versión).
 
 ## Autenticación
 

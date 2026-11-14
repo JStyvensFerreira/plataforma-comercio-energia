@@ -1,12 +1,19 @@
 """
 Plataforma de Comercio de Energía — árbol energético de la comunidad (patrón
 Composite). Consumido por plataforma.py (arbol_energetico).
+
+Cada nodo también implementa `aceptar(visitante)` (patrón Visitor, ver
+analisis_comunidad.py) para que los análisis nuevos sobre el árbol no
+obliguen a agregarle métodos a estas clases.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
+
+if TYPE_CHECKING:
+    from analisis_comunidad import VisitanteEnergetico
 
 
 # ---------------------------------------------------------------------------
@@ -33,6 +40,11 @@ class NodoEnergetico(ABC):
 
     @abstractmethod
     def to_dict(self) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def aceptar(self, visitante: "VisitanteEnergetico") -> None:
+        """Doble despacho (Visitor): llama al método del visitante para SU clase."""
         raise NotImplementedError
 
     # --- operaciones definidas UNA sola vez para todos los niveles ---
@@ -92,6 +104,9 @@ class DispositivoHoja(NodoEnergetico):
 
     def cantidad_dispositivos(self) -> int:
         return 1
+
+    def aceptar(self, visitante: "VisitanteEnergetico") -> None:
+        visitante.visitar_dispositivo(self)
 
     def to_dict(self) -> dict:
         return {
@@ -160,6 +175,9 @@ class GrupoEnergetico(NodoEnergetico):
 
     def cantidad_dispositivos(self) -> int:
         return sum(hijo.cantidad_dispositivos() for hijo in self._hijos)
+
+    def aceptar(self, visitante: "VisitanteEnergetico") -> None:
+        visitante.visitar_grupo(self)
 
     def to_dict(self) -> dict:
         return {

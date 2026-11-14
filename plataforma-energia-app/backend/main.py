@@ -17,6 +17,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
+from analisis_comunidad import VISITANTES_DISPONIBLES
+from configuracion_hogar import SinVersiones
+from estados_orden import TransicionInvalida
 from factory_method import TIPOS_DISPONIBLES
 from notificaciones import CANALES_DISPONIBLES
 from onboarding import OnboardingDispositivo
@@ -116,6 +119,23 @@ class ContactoIn(BaseModel):
     telefono: str | None = None
 
 
+class AlertaPrecioIn(BaseModel):
+    precio_max: float
+
+
+class CoordinarHogarIn(BaseModel):
+    generacion_kwh: float | None = None
+    consumo_kwh: float | None = None
+
+
+class ConfiguracionHogarIn(BaseModel):
+    etiqueta: str = ""
+    reserva_minima_pct: float | None = None
+    precio_venta_kwh: float | None = None
+    precio_compra_max_kwh: float | None = None
+    vender_excedente: bool | None = None
+
+
 class CotizacionIn(BaseModel):
     cantidad_kwh: float
     precio_kwh: float
@@ -208,16 +228,76 @@ def crear_compra(o: OrdenIn, usuario_id: str = Depends(usuario_actual)):
 
 
 @app.get("/ordenes")
-def listar_ordenes():
-    return {
-        "ventas": [o.to_dict() for o in plataforma.ordenes_venta],
-        "compras": [o.to_dict() for o in plataforma.ordenes_compra],
-    }
+def listar_ordenes(recorrido: str = "llegada", usuario: str | None = None):
+    """
+    Libro de órdenes recorrido con el iterador pedido (patrón Iterator):
+    `llegada` (orden de publicación) o `prioridad` (precio-tiempo, el mismo
+    que usa la subasta); `usuario` filtra sin que el cliente toque las listas.
+    """
+    try:
+        return plataforma.listar_ordenes(recorrido, usuario)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.post("/subasta/ejecutar")
 def ejecutar_subasta():
     return plataforma.ejecutar_subasta()
+
+
+# ---------- Ciclo de vida de la orden (patrón State) ----------
+@app.post("/ordenes/{orden_id}/cancelar")
+def cancelar_orden(orden_id: int, usuario_id: str = Depends(usuario_actual)):
+    """
+    Retira una orden propia del mercado. Si se puede cancelar lo decide su
+    estado: abierta/parcial sí; completada/cancelada responde 409.
+    """
+    try:
+        return plataforma.cancelar_orden(usuario_id, orden_id).to_dict()
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except TransicionInvalida as e:
+        raise HTTPException(409, str(e))
+
+
+@app.get("/ordenes/historial")
+def historial_ordenes():
+    """Órdenes que ya no negocian (completadas o canceladas) con su historial de estados."""
+    return [o.to_dict() for o in plataforma.ordenes_cerradas]
+
+
+# ---------- Eventos del mercado (patrón Observer) ----------
+@app.get("/mercado/estadisticas")
+def estadisticas_mercado():
+    """Lo que acumula el observador EstadisticasMercado, suscrito desde el arranque."""
+    datos = plataforma.estadisticas_mercado.to_dict()
+    datos["observadores_suscritos"] = len(plataforma.mercado.observadores)
+    return datos
+
+
+@app.get("/mercado/alertas")
+def mi_alerta_precio(usuario_id: str = Depends(usuario_actual)):
+    alerta = plataforma.alertas_precio.get(usuario_id)
+    return {"alerta": alerta.to_dict() if alerta else None}
+
+
+@app.post("/mercado/alertas")
+def suscribir_alerta(datos: AlertaPrecioIn, usuario_id: str = Depends(usuario_actual)):
+    """
+    Suscribe al usuario como observador del mercado: cada venta de otro
+    usuario a <= precio_max deja un aviso en su bandeja, por su canal.
+    """
+    try:
+        return plataforma.suscribir_alerta_precio(usuario_id, datos.precio_max).to_dict()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/mercado/alertas")
+def desuscribir_alerta(usuario_id: str = Depends(usuario_actual)):
+    return {"desuscrito": plataforma.desuscribir_alerta_precio(usuario_id)}
 
 
 @app.get("/transacciones")
@@ -438,6 +518,71 @@ def arbol_comunidad():
     datos = arbol.to_dict()
     datos["promedio_balance_por_dispositivo"] = arbol.promedio_balance_por_dispositivo()
     return datos
+
+
+# ---------- Análisis del árbol (patrón Visitor) ----------
+@app.get("/comunidad/analisis")
+def listar_analisis():
+    """Análisis disponibles sobre el árbol (un visitante concreto por análisis)."""
+    return {"analisis": list(VISITANTES_DISPONIBLES)}
+
+
+@app.get("/comunidad/analisis/{analisis}")
+def analizar_comunidad(analisis: str):
+    """Recorre el árbol del Composite con el visitante pedido, sin modificar sus clases."""
+    try:
+        return plataforma.analizar_comunidad(analisis)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ---------- Central de energía del hogar (patrón Mediator) ----------
+@app.post("/hogar/coordinar")
+def coordinar_hogar(datos: CoordinarHogarIn, usuario_id: str = Depends(usuario_actual)):
+    """
+    Un intervalo de la central: el panel y el medidor reportan, y la central
+    decide cargar/descargar la batería y publicar venta o compra en el mercado.
+    Sin kWh en el cuerpo, usa la última lectura de tus paneles y medidores.
+    """
+    try:
+        return plataforma.coordinar_hogar(usuario_id, datos.generacion_kwh, datos.consumo_kwh)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ---------- Configuración del hogar con deshacer/rehacer (patrón Memento) ----------
+@app.get("/hogar/configuracion")
+def ver_configuracion_hogar(usuario_id: str = Depends(usuario_actual)):
+    return plataforma.configuracion_hogar(usuario_id)
+
+
+@app.put("/hogar/configuracion")
+def cambiar_configuracion_hogar(datos: ConfiguracionHogarIn, usuario_id: str = Depends(usuario_actual)):
+    """Guarda un memento de la versión actual y aplica el cambio (inválido → 400, sin respaldo)."""
+    cambios = datos.model_dump(exclude_none=True)
+    etiqueta = cambios.pop("etiqueta", "")
+    if not cambios:
+        raise HTTPException(400, "No se indicó ningún cambio")
+    try:
+        return plataforma.cambiar_configuracion_hogar(usuario_id, etiqueta, **cambios)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/hogar/configuracion/deshacer")
+def deshacer_configuracion_hogar(usuario_id: str = Depends(usuario_actual)):
+    try:
+        return plataforma.deshacer_configuracion_hogar(usuario_id)
+    except SinVersiones as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/hogar/configuracion/rehacer")
+def rehacer_configuracion_hogar(usuario_id: str = Depends(usuario_actual)):
+    try:
+        return plataforma.rehacer_configuracion_hogar(usuario_id)
+    except SinVersiones as e:
+        raise HTTPException(409, str(e))
 
 
 # ---------- Reporte energético (patrón Builder) ----------

@@ -215,6 +215,7 @@
     <button :class="{active: tab==='notificaciones'}" @click="tab='notificaciones'; cargarNotificaciones()">Notificaciones</button>
     <button :class="{active: tab==='pagos'}" @click="tab='pagos'; cargarPagos()">Pagos</button>
     <button :class="{active: tab==='comunidad'}" @click="tab='comunidad'; cargarArbol()">Comunidad</button>
+    <button :class="{active: tab==='hogar'}" @click="tab='hogar'; cargarConfiguracionHogar()">Mi hogar</button>
   </nav>
 
   <main v-if="usuarioActual">
@@ -275,18 +276,91 @@
           <h3 style="margin:0;">Libro de órdenes en vivo</h3>
           <button class="btn" @click="ejecutarSubasta">Ejecutar subasta</button>
         </div>
+        <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:10px;">
+          <div>
+            <label>Recorrido <span class="badge">Iterator</span></label>
+            <select v-model="recorridoLibro" @change="cargarOrdenes">
+              <option value="llegada">Por llegada</option>
+              <option value="prioridad">Prioridad de subasta (precio-tiempo)</option>
+            </select>
+          </div>
+          <label style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+            <input type="checkbox" v-model="soloMisOrdenes" @change="cargarOrdenes" style="width:auto;" /> Solo mis órdenes
+          </label>
+        </div>
+        <div class="helper" style="margin-top:4px;">
+          El libro entrega un <b>iterador</b> por recorrido sin exponer sus listas: «prioridad» es el mismo que usa la subasta
+          (ventas más baratas y compras más caras primero; a igual precio, la que llegó antes).
+        </div>
+        <div class="helper" style="margin-top:8px;">
+          Cada orden delega en su <b>estado</b> <span class="badge">State</span>: abierta → parcial → completada,
+          o cancelada mientras siga negociable. Una orden completada o cancelada rechaza cualquier operación.
+        </div>
         <table style="margin-top:12px;">
-          <thead><tr><th>Tipo</th><th>Usuario</th><th>Cantidad</th><th>Precio</th></tr></thead>
+          <thead><tr><th>#</th><th>Tipo</th><th>Usuario</th><th>Pendiente</th><th>Precio</th><th>Estado</th><th></th></tr></thead>
           <tbody>
-            <tr v-for="o in ordenes.ventas" :key="'v'+o.id">
-              <td><span class="badge venta">Venta</span></td><td>{{o.usuario_id}}</td><td>{{o.cantidad_kwh}} kWh</td><td>${{o.precio_kwh}}</td>
-            </tr>
-            <tr v-for="o in ordenes.compras" :key="'c'+o.id">
-              <td><span class="badge compra">Compra</span></td><td>{{o.usuario_id}}</td><td>{{o.cantidad_kwh}} kWh</td><td>${{o.precio_kwh}}</td>
+            <tr v-for="o in [...ordenes.ventas, ...ordenes.compras]" :key="o.tipo+o.id">
+              <td>{{o.id}}</td>
+              <td><span class="badge" :class="o.tipo">{{ o.tipo === 'venta' ? 'Venta' : 'Compra' }}</span></td>
+              <td>{{o.usuario_id}}</td>
+              <td>{{o.cantidad_kwh}} / {{o.cantidad_inicial}} kWh</td>
+              <td>${{o.precio_kwh}}</td>
+              <td><span class="badge">{{o.estado}}</span></td>
+              <td><button class="btn ghost" style="margin-top:0;" v-if="o.usuario_id === usuarioActual.id" @click="cancelarOrden(o.id)">Cancelar</button></td>
             </tr>
           </tbody>
         </table>
         <div class="empty" v-if="!ordenes.ventas.length && !ordenes.compras.length">Aún no hay órdenes activas.</div>
+      </div>
+
+      <div class="card" style="margin-top:18px;" v-if="historialOrdenes.length">
+        <h3>Órdenes cerradas <span class="badge">State</span></h3>
+        <table>
+          <thead><tr><th>#</th><th>Tipo</th><th>Usuario</th><th>Ejecutado</th><th>Estado final</th><th>Transiciones</th></tr></thead>
+          <tbody>
+            <tr v-for="o in [...historialOrdenes].reverse()" :key="'h'+o.id">
+              <td>{{o.id}}</td>
+              <td><span class="badge" :class="o.tipo">{{ o.tipo === 'venta' ? 'Venta' : 'Compra' }}</span></td>
+              <td>{{o.usuario_id}}</td>
+              <td>{{ +(o.cantidad_inicial - o.cantidad_kwh).toFixed(2) }} / {{o.cantidad_inicial}} kWh</td>
+              <td><span class="badge">{{o.estado}}</span></td>
+              <td style="font-family:Inter;">{{ o.historial_estados.join(' → ') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid cols-2" style="margin-top:18px;">
+        <div class="card">
+          <h3>Alerta de precio <span class="badge">Observer</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            Te suscribes como <b>observador</b> del mercado: cada vez que otro usuario publique una venta
+            a un precio menor o igual a tu máximo, te llega un aviso a la bandeja por tu canal.
+          </div>
+          <div v-if="alertaPrecio" class="helper">
+            Suscrito con máximo <b>${{ alertaPrecio.precio_max }}</b>/kWh · avisos recibidos: <b>{{ alertaPrecio.disparos }}</b>
+          </div>
+          <label>Precio máximo ($/kWh)</label>
+          <input type="number" v-model.number="precioMaxAlerta" min="0" step="0.01" />
+          <button class="btn" @click="suscribirAlerta">{{ alertaPrecio ? 'Actualizar alerta' : 'Suscribirme' }}</button>
+          <button class="btn ghost" v-if="alertaPrecio" @click="desuscribirAlerta">Desuscribirme</button>
+        </div>
+        <div class="card" v-if="estadisticasMercado">
+          <h3>Estadísticas del mercado <span class="badge">Observer</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            Las actualiza un observador suscrito desde el arranque; el mercado no sabe que existe.
+            Observadores activos: <b>{{ estadisticasMercado.observadores_suscritos }}</b>.
+          </div>
+          <table>
+            <tbody>
+              <tr><td style="font-family:Inter;">Órdenes publicadas</td><td>{{ estadisticasMercado.ordenes_publicadas }}</td></tr>
+              <tr><td style="font-family:Inter;">Órdenes canceladas</td><td>{{ estadisticasMercado.ordenes_canceladas }}</td></tr>
+              <tr><td style="font-family:Inter;">Transacciones</td><td>{{ estadisticasMercado.transacciones }}</td></tr>
+              <tr><td style="font-family:Inter;">Volumen negociado</td><td>{{ estadisticasMercado.volumen_kwh }} kWh</td></tr>
+              <tr><td style="font-family:Inter;">Precio promedio (ponderado)</td><td>${{ estadisticasMercado.precio_promedio }}</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card" style="margin-top:18px;">
@@ -713,6 +787,89 @@
         </table>
         <div class="empty" v-else>Cargando árbol…</div>
       </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h3>Análisis de la comunidad <span class="badge">Visitor</span></h3>
+        <div class="helper" style="margin-bottom:8px;">
+          Cada análisis es un <b>visitante</b> que recorre el mismo árbol: los nodos solo implementan
+          <code>aceptar(visitante)</code>, así que agregar un análisis nuevo no cambia el Composite.
+        </div>
+        <div class="row-inline">
+          <div>
+            <label>Análisis</label>
+            <select v-model="analisisSeleccionado">
+              <option v-for="a in analisisDisponibles" :key="a" :value="a">{{ a }}</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn" @click="analizarComunidad">Analizar</button>
+        <pre v-if="resultadoAnalisis" style="white-space:pre-wrap; font-size:13px; margin-top:12px;">{{ typeof resultadoAnalisis === 'string' ? resultadoAnalisis : JSON.stringify(resultadoAnalisis, null, 2) }}</pre>
+      </div>
+    </section>
+
+    <!-- MI HOGAR -->
+    <section v-if="tab==='hogar'">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Central de energía del hogar <span class="badge">Mediator</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            El panel solar, el medidor, la batería y el mercado <b>no se conocen entre sí</b>: cada uno solo avisa a la
+            central, que decide. Excedente → carga la batería y vende lo que no quepa. Déficit → descarga la batería
+            sin romper la reserva y compra lo que falte. Deja vacíos los campos para usar la última lectura de tus
+            paneles y medidores.
+          </div>
+          <div class="helper" v-if="hogar">
+            Batería: <b>{{ hogar.bateria.carga_kwh }} / {{ hogar.bateria.capacidad_kwh }} kWh</b> ({{ hogar.bateria.nivel_pct }}%)
+            <span v-if="!hogar.bateria.capacidad_kwh"> — conecta un dispositivo «bateria» para tener almacenamiento (10 kWh c/u)</span>
+          </div>
+          <div v-if="hogar && hogar.bateria.capacidad_kwh" style="height:8px; background:var(--amber-dim); border-radius:4px; margin:6px 0 10px;">
+            <div :style="{width: hogar.bateria.nivel_pct + '%', height:'100%', background:'var(--green)', borderRadius:'4px'}"></div>
+          </div>
+          <div class="grid cols-2">
+            <div><label>Generación (kWh)</label><input type="number" v-model.number="intervaloHogar.generacion_kwh" min="0" step="0.1" placeholder="última lectura" /></div>
+            <div><label>Consumo (kWh)</label><input type="number" v-model.number="intervaloHogar.consumo_kwh" min="0" step="0.1" placeholder="última lectura" /></div>
+          </div>
+          <button class="btn" @click="coordinarHogar">Coordinar intervalo</button>
+          <div v-if="resultadoHogar" style="margin-top:12px;">
+            <div class="helper" v-for="(linea, i) in resultadoHogar.registro" :key="i">› {{ linea }}</div>
+            <div class="helper" v-if="resultadoHogar.ordenes_publicadas.length" style="margin-top:6px;">
+              Órdenes publicadas en el mercado:
+              <span v-for="o in resultadoHogar.ordenes_publicadas" :key="o.id" class="badge" :class="o.tipo" style="margin-right:6px;">
+                #{{ o.id }} {{ o.tipo }} {{ o.cantidad_kwh }} kWh @ ${{ o.precio_kwh }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" v-if="hogar">
+          <h3>Reglas del hogar <span class="badge">Memento</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            Son las reglas que usa la central. Antes de cada cambio se guarda una <b>instantánea inmutable</b>
+            (memento) de la versión actual, así puedes deshacer y rehacer. Un cambio inválido no se aplica ni deja versión.
+          </div>
+          <div class="grid cols-2">
+            <div><label>Reserva mínima de batería (%)</label><input type="number" v-model.number="configForm.reserva_minima_pct" min="0" max="100" /></div>
+            <div><label>Precio de venta ($/kWh)</label><input type="number" v-model.number="configForm.precio_venta_kwh" min="0" step="0.01" /></div>
+            <div><label>Precio máx. de compra ($/kWh)</label><input type="number" v-model.number="configForm.precio_compra_max_kwh" min="0" step="0.01" /></div>
+            <div>
+              <label>¿Vender excedente?</label>
+              <select v-model="configForm.vender_excedente"><option :value="true">Sí</option><option :value="false">No, verter a la red</option></select>
+            </div>
+          </div>
+          <label>Nombre del cambio</label>
+          <input v-model="configForm.etiqueta" placeholder="p. ej. reserva para la noche" />
+          <button class="btn" @click="guardarConfiguracionHogar">Guardar cambio</button>
+          <button class="btn ghost" :disabled="!hogar.puede_deshacer" @click="moverConfiguracionHogar('deshacer')">↶ Deshacer</button>
+          <button class="btn ghost" :disabled="!hogar.puede_rehacer" @click="moverConfiguracionHogar('rehacer')">↷ Rehacer</button>
+          <div style="margin-top:12px;" v-if="hogar.versiones.length">
+            <div class="helper">Versiones guardadas (más reciente al final):</div>
+            <div class="helper" v-for="(v, i) in hogar.versiones" :key="i">
+              {{ i + 1 }}. antes de «{{ v.etiqueta }}» · {{ new Date(v.creado).toLocaleTimeString() }}
+            </div>
+          </div>
+          <div class="empty" v-else>Aún no hay versiones guardadas.</div>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -765,9 +922,22 @@ createApp({
       reporteFormato: '',
       contacto: { email: '', telefono: '' },
       arbol: null,
+      historialOrdenes: [],
+      alertaPrecio: null,
+      precioMaxAlerta: 0.15,
+      estadisticasMercado: null,
+      analisisDisponibles: [],
+      analisisSeleccionado: 'huella_carbono',
+      resultadoAnalisis: null,
       ajustesDisponibles: [],
       cotizacion: { cantidad_kwh: 10, precio_kwh: 0.20, ajustes: [] },
       resultadoCotizacion: null,
+      recorridoLibro: 'llegada',
+      soloMisOrdenes: false,
+      hogar: null,
+      configForm: { etiqueta: '', reserva_minima_pct: 20, precio_venta_kwh: 0.15, precio_compra_max_kwh: 0.20, vender_excedente: true },
+      intervaloHogar: { generacion_kwh: null, consumo_kwh: null },
+      resultadoHogar: null,
       toast: { msg: '', error: false },
     }
   },
@@ -858,7 +1028,103 @@ createApp({
       return r;
     },
     async refrescarTodo(){
-      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos(), this.cargarCatalogo(), this.cargarAuditoria()]);
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos(), this.cargarCatalogo(), this.cargarAuditoria(), this.cargarAlerta(), this.cargarAnalisisDisponibles()]);
+    },
+    async cargarAlerta(){
+      if(!this.token) return;
+      try{
+        const r = await this.peticionProtegida('/mercado/alertas');
+        if(r.ok) this.alertaPrecio = (await r.json()).alerta;
+      }catch(e){}
+    },
+    async suscribirAlerta(){
+      try{
+        const r = await this.peticionProtegida('/mercado/alertas', {
+          method:'POST', body: JSON.stringify({ precio_max: this.precioMaxAlerta })
+        });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo suscribir');
+        this.alertaPrecio = data;
+        this.mostrarToast(`Alerta activa: ventas a $${data.precio_max}/kWh o menos`);
+        this.cargarEstadisticasMercado();
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    async desuscribirAlerta(){
+      try{
+        await this.peticionProtegida('/mercado/alertas', { method:'DELETE' });
+        this.alertaPrecio = null;
+        this.mostrarToast('Alerta de precio desactivada');
+        this.cargarEstadisticasMercado();
+      }catch(e){ this.mostrarToast('Error al desuscribir', true); }
+    },
+    async cargarEstadisticasMercado(){
+      try{ this.estadisticasMercado = await (await fetch(this.apiBase + '/mercado/estadisticas')).json(); }catch(e){}
+    },
+    async cargarHistorialOrdenes(){
+      try{ this.historialOrdenes = await (await fetch(this.apiBase + '/ordenes/historial')).json(); }catch(e){}
+    },
+    async cancelarOrden(id){
+      try{
+        const r = await this.peticionProtegida(`/ordenes/${id}/cancelar`, { method:'POST' });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo cancelar');
+        this.mostrarToast(`Orden #${id}: ${data.historial_estados.join(' → ')}`);
+        this.cargarOrdenes();
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    aplicarHogar(data){
+      this.hogar = data;
+      this.configForm = { ...data.configuracion, etiqueta: '' };
+    },
+    async cargarConfiguracionHogar(){
+      try{
+        const r = await this.peticionProtegida('/hogar/configuracion');
+        if(r.ok) this.aplicarHogar(await r.json());
+      }catch(e){}
+    },
+    async guardarConfiguracionHogar(){
+      try{
+        const r = await this.peticionProtegida('/hogar/configuracion', { method:'PUT', body: JSON.stringify(this.configForm) });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo guardar');
+        this.aplicarHogar(data);
+        this.mostrarToast('Cambio guardado: la versión anterior quedó respaldada');
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    async moverConfiguracionHogar(accion){
+      try{
+        const r = await this.peticionProtegida('/hogar/configuracion/' + accion, { method:'POST' });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo ' + accion);
+        this.aplicarHogar(data);
+        this.mostrarToast((accion === 'deshacer' ? 'Deshecho' : 'Rehecho') + ': «' + (data.deshecho || data.rehecho) + '»');
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    async coordinarHogar(){
+      const cuerpo = {};
+      for(const campo of ['generacion_kwh', 'consumo_kwh']){
+        const valor = this.intervaloHogar[campo];
+        if(valor !== null && valor !== '') cuerpo[campo] = valor;
+      }
+      try{
+        const r = await this.peticionProtegida('/hogar/coordinar', { method:'POST', body: JSON.stringify(cuerpo) });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo coordinar');
+        this.resultadoHogar = data;
+        if(this.hogar) this.hogar.bateria = data.bateria;
+        this.cargarOrdenes();
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    async cargarAnalisisDisponibles(){
+      try{ this.analisisDisponibles = (await (await fetch(this.apiBase + '/comunidad/analisis')).json()).analisis; }catch(e){}
+    },
+    async analizarComunidad(){
+      try{
+        const r = await fetch(this.apiBase + '/comunidad/analisis/' + encodeURIComponent(this.analisisSeleccionado));
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo analizar');
+        this.resultadoAnalisis = data.resultado.csv ?? data.resultado;
+      }catch(e){ this.mostrarToast(e.message, true); }
     },
     async cargarCatalogo(){
       try{ this.catalogoDispositivos = (await (await fetch(this.apiBase + '/iot/catalogo')).json()).catalogo; }catch(e){}
@@ -1010,7 +1276,14 @@ createApp({
       try{ this.dispositivos = await (await fetch(this.apiBase + '/iot/dispositivos')).json(); }catch(e){}
     },
     async cargarOrdenes(){
-      try{ this.ordenes = await (await fetch(this.apiBase + '/ordenes')).json(); }catch(e){}
+      // El cliente elige el recorrido; el libro decide cómo iterar (Iterator).
+      const params = new URLSearchParams({ recorrido: this.recorridoLibro });
+      if(this.soloMisOrdenes && this.usuarioActual) params.set('usuario', this.usuarioActual.id);
+      try{ this.ordenes = await (await fetch(this.apiBase + '/ordenes?' + params)).json(); }catch(e){}
+      // El libro de órdenes cambia junto con el historial (State) y las estadísticas (Observer).
+      this.cargarHistorialOrdenes();
+      this.cargarEstadisticasMercado();
+      this.cargarAlerta();
     },
     async cargarTransacciones(){
       try{ this.transacciones = await (await fetch(this.apiBase + '/transacciones')).json(); }catch(e){}

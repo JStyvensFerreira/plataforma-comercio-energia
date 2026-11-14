@@ -64,16 +64,44 @@ Documentacion/
 │   ├── test_bridge.py
 │   ├── test_facade.py
 │   └── conftest.py                  # compartido por los dos patrones
-└── Semana 10/                       # Flyweight + Proxy
-    ├── Patron Flyweight.md
-    ├── Patron Proxy.md
-    ├── UML_Flyweight.png
-    ├── UML_Proxy.png
-    ├── flyweight.py
-    ├── proxy.py
-    ├── test_flyweight.py
-    ├── test_proxy.py
-    └── conftest.py                  # compartido por los dos patrones
+├── Semana 10/                       # Flyweight + Proxy
+│   ├── Patron Flyweight.md
+│   ├── Patron Proxy.md
+│   ├── UML_Flyweight.png
+│   ├── UML_Proxy.png
+│   ├── flyweight.py
+│   ├── proxy.py
+│   ├── test_flyweight.py
+│   ├── test_proxy.py
+│   └── conftest.py                  # compartido por los dos patrones
+├── Semana 13/                       # Iterator + Mediator + Memento (comportamiento)
+│   ├── Patron Iterator.md
+│   ├── Patron Mediator.md
+│   ├── Patron Memento.md
+│   ├── UML_Iterator.png
+│   ├── UML_Mediator.png
+│   ├── UML_Memento.png
+│   ├── iterator.py
+│   ├── mediator.py
+│   ├── memento.py
+│   ├── test_iterator.py
+│   ├── test_mediator.py
+│   ├── test_memento.py
+│   └── conftest.py                  # compartido por los tres patrones
+└── Semana 14/                       # Observer + State + Visitor (comportamiento)
+    ├── Patron Observer.md
+    ├── Patron State.md
+    ├── Patron Visitor.md
+    ├── UML_Observer.png
+    ├── UML_State.png
+    ├── UML_Visitor.png
+    ├── observer.py
+    ├── state.py
+    ├── visitor.py
+    ├── test_observer.py
+    ├── test_state.py
+    ├── test_visitor.py
+    └── conftest.py                  # compartido por los tres patrones
 ```
 
 Cada carpeta incluye además el **diagrama UML de clases** del patrón (generado a
@@ -94,6 +122,12 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Facade | 9 | [`Patron Facade.md`](Semana%209/Patron%20Facade.md) | [`facade.py`](Semana%209/facade.py) | [`test_facade.py`](Semana%209/test_facade.py) | [`UML_Facade.png`](Semana%209/UML_Facade.png) |
 | Flyweight | 10 | [`Patron Flyweight.md`](Semana%2010/Patron%20Flyweight.md) | [`flyweight.py`](Semana%2010/flyweight.py) | [`test_flyweight.py`](Semana%2010/test_flyweight.py) | [`UML_Flyweight.png`](Semana%2010/UML_Flyweight.png) |
 | Proxy | 10 | [`Patron Proxy.md`](Semana%2010/Patron%20Proxy.md) | [`proxy.py`](Semana%2010/proxy.py) | [`test_proxy.py`](Semana%2010/test_proxy.py) | [`UML_Proxy.png`](Semana%2010/UML_Proxy.png) |
+| Iterator | 13 | [`Patron Iterator.md`](Semana%2013/Patron%20Iterator.md) | [`iterator.py`](Semana%2013/iterator.py) | [`test_iterator.py`](Semana%2013/test_iterator.py) | [`UML_Iterator.png`](Semana%2013/UML_Iterator.png) |
+| Mediator | 13 | [`Patron Mediator.md`](Semana%2013/Patron%20Mediator.md) | [`mediator.py`](Semana%2013/mediator.py) | [`test_mediator.py`](Semana%2013/test_mediator.py) | [`UML_Mediator.png`](Semana%2013/UML_Mediator.png) |
+| Memento | 13 | [`Patron Memento.md`](Semana%2013/Patron%20Memento.md) | [`memento.py`](Semana%2013/memento.py) | [`test_memento.py`](Semana%2013/test_memento.py) | [`UML_Memento.png`](Semana%2013/UML_Memento.png) |
+| Observer | 14 | [`Patron Observer.md`](Semana%2014/Patron%20Observer.md) | [`observer.py`](Semana%2014/observer.py) | [`test_observer.py`](Semana%2014/test_observer.py) | [`UML_Observer.png`](Semana%2014/UML_Observer.png) |
+| State | 14 | [`Patron State.md`](Semana%2014/Patron%20State.md) | [`state.py`](Semana%2014/state.py) | [`test_state.py`](Semana%2014/test_state.py) | [`UML_State.png`](Semana%2014/UML_State.png) |
+| Visitor | 14 | [`Patron Visitor.md`](Semana%2014/Patron%20Visitor.md) | [`visitor.py`](Semana%2014/visitor.py) | [`test_visitor.py`](Semana%2014/test_visitor.py) | [`UML_Visitor.png`](Semana%2014/UML_Visitor.png) |
 
 ## Cómo ejecutar
 
@@ -121,20 +155,26 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Documentacion\Semana 2\test_singleton.py ..................              [  8%]
-Documentacion\Semana 3\test_factory_method.py ................           [ 15%]
-Documentacion\Semana 4\test_abstract_factory.py ........................ [ 27%]
-Documentacion\Semana 5\test_builder.py ..............................    [ 40%]
-Documentacion\Semana 6\test_prototype.py ........................        [ 50%]
-Documentacion\Semana 7\test_adapter.py .................                 [ 58%]
-Documentacion\Semana 8\test_composite.py .....................           [ 67%]
-Documentacion\Semana 8\test_decorator.py ........................        [ 78%]
-Documentacion\Semana 9\test_bridge.py ..................                 [ 86%]
-Documentacion\Semana 9\test_facade.py ............                       [ 91%]
-Documentacion\Semana 10\test_flyweight.py .........                      [ 95%]
-Documentacion\Semana 10\test_proxy.py ............                       [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [  5%]
+Documentacion\Semana 3\test_factory_method.py ................           [ 10%]
+Documentacion\Semana 4\test_abstract_factory.py ...........................[ 17%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 26%]
+Documentacion\Semana 6\test_prototype.py ........................        [ 33%]
+Documentacion\Semana 7\test_adapter.py .................                 [ 38%]
+Documentacion\Semana 8\test_composite.py .....................           [ 44%]
+Documentacion\Semana 8\test_decorator.py ........................        [ 51%]
+Documentacion\Semana 9\test_bridge.py ..................                 [ 56%]
+Documentacion\Semana 9\test_facade.py ............                       [ 59%]
+Documentacion\Semana 10\test_flyweight.py .........                      [ 62%]
+Documentacion\Semana 10\test_proxy.py ............                       [ 65%]
+Documentacion\Semana 13\test_iterator.py ..........................      [ 73%]
+Documentacion\Semana 13\test_mediator.py ......................          [ 79%]
+Documentacion\Semana 13\test_memento.py ..................               [ 84%]
+Documentacion\Semana 14\test_observer.py ..................              [ 89%]
+Documentacion\Semana 14\test_state.py .......................            [ 96%]
+Documentacion\Semana 14\test_visitor.py ...............                  [100%]
 
-228 passed
+350 passed
 ```
 
 ---
@@ -459,3 +499,177 @@ objeto real comparten la misma interfaz `GeneradorReportes`.
 | PX-10 | `test_el_acierto_de_cache_queda_registrado_distinto_de_generado` | El resultado distingue `generado` de `cache` |
 | PX-11 | `test_el_proxy_y_el_objeto_real_implementan_el_mismo_subject` | Proxy y RealSubject son ambos `GeneradorReportes` |
 | PX-12 | `test_no_se_puede_instanciar_el_subject_abstracto` | `GeneradorReportes` abstracto → `TypeError` |
+
+## Casos de prueba — Iterator
+
+Verifica que el libro de órdenes (Aggregate) entrega recorridos intercambiables
+sin exponer sus listas: por llegada, por prioridad precio-tiempo (ventas baratas
+primero, compras caras primero, empate por llegada) y filtrado; que todos cumplen
+la misma interfaz y el protocolo de Python, se pueden reiniciar y trabajan sobre
+una instantánea del libro.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| IT-01 | `test_por_llegada_respeta_el_orden_de_publicacion` | Por llegada respeta el orden de publicación |
+| IT-02 | `test_por_llegada_de_un_solo_tipo` | Por llegada de un solo tipo |
+| IT-03 | `test_ventas_por_prioridad_mas_baratas_primero` | Ventas por prioridad más baratas primero |
+| IT-04 | `test_compras_por_prioridad_mas_caras_primero` | Compras por prioridad más caras primero |
+| IT-05 | `test_a_igual_precio_gana_la_que_llego_antes` | A igual precio gana la que llegó antes |
+| IT-06 | `test_la_coleccion_es_iterable_directamente` | La colección es iterable directamente |
+| IT-07 | `test_libro_vacio_no_entrega_nada` | Libro vacío no entrega nada |
+| IT-08 | `test_ordenes_de_un_usuario` | Órdenes de un usuario |
+| IT-09 | `test_usuario_sin_ordenes` | Usuario sin órdenes |
+| IT-10 | `test_negociables_omite_las_cerradas_y_conserva_la_prioridad` | Negociables omite las cerradas y conserva la prioridad |
+| IT-11 | `test_el_filtro_envuelve_cualquier_iterador` | El filtro envuelve cualquier iterador |
+| IT-12 | `test_tiene_siguiente_no_consume_elementos` | Tiene siguiente no consume elementos |
+| IT-13 | `test_todos_cumplen_la_interfaz_comun` | Todos cumplen la interfaz común (parametrizado) |
+| IT-14 | `test_tipos_concretos_segun_el_recorrido` | Tipos concretos según el recorrido |
+| IT-15 | `test_siguiente_al_final_lanza_stop_iteration` | Siguiente al final lanza `StopIteration` |
+| IT-16 | `test_reiniciar_vuelve_al_principio` | Reiniciar vuelve al principio (parametrizado) |
+| IT-17 | `test_reiniciar_un_filtrado` | Reiniciar un filtrado |
+| IT-18 | `test_dos_iteradores_son_independientes` | Dos iteradores son independientes |
+| IT-19 | `test_publicar_durante_el_recorrido_no_altera_la_instantanea` | Publicar durante el recorrido no altera la instantánea |
+| IT-20 | `test_recorrer_no_modifica_el_libro` | Recorrer no modifica el libro |
+| IT-21 | `test_recorrido_desconocido` | Recorrido desconocido |
+| IT-22 | `test_prioridad_exige_tipo` | Prioridad exige tipo |
+| IT-23 | `test_tipo_de_orden_desconocido` | Tipo de orden desconocido |
+
+## Casos de prueba — Mediator
+
+Verifica que los componentes del hogar solo hablan con la central; que la central
+balancea cada intervalo cuando tiene la lectura del panel y la del medidor; que el
+excedente carga la batería y el resto se vende (o se vierte); que el déficit
+descarga la batería sin romper la reserva y el faltante se compra.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| ME-01 | `test_la_central_es_un_mediador` | La central es un mediador |
+| ME-02 | `test_la_central_se_registra_en_cada_componente` | La central se registra en cada componente |
+| ME-03 | `test_ningun_componente_referencia_a_otro` | Ningún componente referencia a otro |
+| ME-04 | `test_un_componente_sin_central_no_puede_reportar` | Un componente sin central no puede reportar |
+| ME-05 | `test_evento_desconocido_se_rechaza` | Evento desconocido se rechaza |
+| ME-06 | `test_solo_el_panel_no_dispara_el_balance` | Solo el panel no dispara el balance |
+| ME-07 | `test_el_orden_de_las_lecturas_no_importa` | El orden de las lecturas no importa |
+| ME-08 | `test_excedente_que_cabe_en_la_bateria_no_se_vende` | Excedente que cabe en la batería no se vende |
+| ME-09 | `test_lo_que_no_cabe_se_vende_al_precio_configurado` | Lo que no cabe se vende al precio configurado |
+| ME-10 | `test_si_el_hogar_no_vende_el_resto_se_vierte` | Si el hogar no vende el resto se vierte |
+| ME-11 | `test_sin_bateria_todo_el_excedente_va_al_mercado` | Sin batería todo el excedente va al mercado |
+| ME-12 | `test_deficit_cubierto_por_la_bateria` | Déficit cubierto por la batería |
+| ME-13 | `test_la_bateria_nunca_baja_de_la_reserva` | La batería nunca baja de la reserva |
+| ME-14 | `test_bateria_bajo_la_reserva_no_entrega_nada` | Batería bajo la reserva no entrega nada |
+| ME-15 | `test_empate_no_mueve_energia` | Empate no mueve energía |
+| ME-16 | `test_decimales_sin_residuos` | Decimales sin residuos |
+| ME-17 | `test_cada_intervalo_se_balancea_por_separado` | Cada intervalo se balancea por separado |
+| ME-18 | `test_cambiar_las_reglas_cambia_la_decision_sin_tocar_componentes` | Cambiar las reglas cambia la decisión sin tocar componentes |
+| ME-19 | `test_el_registro_explica_cada_decision` | El registro explica cada decisión |
+| ME-20 | `test_lecturas_negativas_se_rechazan` | Lecturas negativas se rechazan (parametrizado) |
+| ME-21 | `test_bateria_con_carga_invalida` | Batería con carga inválida |
+
+## Casos de prueba — Memento
+
+Verifica que la configuración del hogar (Originator) se guarda y restaura con
+mementos inmutables; que el historial (Caretaker) deshace y rehace sin conocer su
+contenido; que un cambio inválido no altera nada ni deja respaldo; que un cambio
+nuevo invalida el rehacer y que se respeta el límite de versiones.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| MM-01 | `test_guardar_y_restaurar` | Guardar y restaurar |
+| MM-02 | `test_el_memento_es_inmutable` | El memento es inmutable |
+| MM-03 | `test_cambios_posteriores_no_alteran_el_memento` | Cambios posteriores no alteran el memento |
+| MM-04 | `test_el_memento_solo_muestra_metadatos` | El memento solo muestra metadatos |
+| MM-05 | `test_actualizacion_invalida_no_cambia_nada` | Actualización inválida no cambia nada |
+| MM-06 | `test_campo_desconocido` | Campo desconocido |
+| MM-07 | `test_configuracion_inicial_invalida` | Configuración inicial inválida |
+| MM-08 | `test_deshacer_vuelve_a_la_version_anterior` | Deshacer vuelve a la versión anterior |
+| MM-09 | `test_deshacer_varias_veces` | Deshacer varias veces |
+| MM-10 | `test_deshacer_devuelve_el_cambio_revertido` | Deshacer devuelve el cambio revertido |
+| MM-11 | `test_rehacer_reaplica_el_cambio` | Rehacer reaplica el cambio |
+| MM-12 | `test_deshacer_y_rehacer_son_simetricos` | Deshacer y rehacer son simétricos |
+| MM-13 | `test_un_cambio_nuevo_invalida_el_rehacer` | Un cambio nuevo inválida el rehacer |
+| MM-14 | `test_sin_cambios_no_se_puede_deshacer` | Sin cambios no se puede deshacer |
+| MM-15 | `test_cambio_invalido_no_deja_respaldo` | Cambio inválido no deja respaldo |
+| MM-16 | `test_versiones_solo_expone_metadatos` | Versiones solo expone metadatos |
+| MM-17 | `test_limite_descarta_las_versiones_mas_antiguas` | Límite descarta las versiones más antiguas |
+| MM-18 | `test_limite_invalido` | Límite inválido |
+
+## Casos de prueba — Observer
+
+Verifica que `MercadoEnergia` avisa a todos sus observadores suscritos (y solo a
+ellos), que la suscripción es dinámica, que cada observador concreto reacciona
+solo a los eventos que le interesan y que un observador defectuoso no impide
+avisar al resto.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| OB-01 | `test_todos_los_suscritos_reciben_el_evento` | Todos los suscritos reciben el evento |
+| OB-02 | `test_un_desuscrito_deja_de_recibir_eventos` | Un desuscrito deja de recibir eventos |
+| OB-03 | `test_suscribir_dos_veces_no_duplica_avisos` | Suscribir dos veces no duplica avisos |
+| OB-04 | `test_sin_observadores_el_mercado_funciona_igual` | Sin observadores el mercado funciona igual |
+| OB-05 | `test_el_evento_lleva_el_tipo_y_los_datos` | El evento lleva tipo y datos |
+| OB-06 | `test_un_observador_roto_no_impide_avisar_a_los_demas` | Un observador que falla no frena a los demás (queda en `errores`) |
+| OB-07 | `test_un_observador_puede_desuscribirse_mientras_recibe_el_evento` | Un observador puede desuscribirse durante la notificación |
+| OB-08 | `test_avisa_cuando_la_venta_esta_por_debajo_del_maximo` | Venta ajena con precio < máximo → aviso |
+| OB-09 | `test_el_precio_igual_al_maximo_tambien_avisa` | Precio igual al máximo → aviso |
+| OB-10 | `test_no_avisa_si_el_precio_supera_el_maximo` | Precio mayor al máximo → sin aviso |
+| OB-11 | `test_no_avisa_por_ordenes_de_compra` | Órdenes de compra no disparan la alerta |
+| OB-12 | `test_no_avisa_por_las_ventas_del_propio_usuario` | Ventas propias no disparan la alerta |
+| OB-13 | `test_acumula_volumen_y_cantidad_de_transacciones` | Acumula volumen y número de transacciones |
+| OB-14 | `test_el_precio_promedio_es_ponderado_por_volumen` | Precio promedio ponderado por volumen |
+| OB-15 | `test_ignora_las_ordenes_publicadas` | Las órdenes publicadas no cuentan como transacción |
+| OB-16 | `test_los_observadores_concretos_implementan_la_interfaz` | Los observadores concretos son `ObservadorMercado` |
+| OB-17 | `test_no_se_puede_instanciar_el_observador_abstracto` | `ObservadorMercado` abstracto → `TypeError` |
+| OB-18 | `test_el_evento_es_inmutable` | `EventoMercado` es inmutable |
+
+## Casos de prueba — State
+
+Verifica que la orden (Context) cambia de comportamiento según su estado, que
+cada estado decide sus transiciones, que los estados finales rechazan cualquier
+operación con `TransicionInvalida` y que el historial de estados queda registrado.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| ST-01 | `test_una_orden_nueva_empieza_abierta` | Una orden nueva empieza `abierta` |
+| ST-02 | `test_ejecucion_parcial_pasa_a_parcial` | Ejecución parcial → `parcial` |
+| ST-03 | `test_ejecutar_todo_desde_abierta_pasa_a_completada` | Ejecutar todo desde abierta → `completada` |
+| ST-04 | `test_ejecutar_el_resto_desde_parcial_pasa_a_completada` | Ejecutar el resto desde parcial → `completada` |
+| ST-05 | `test_varias_ejecuciones_parciales_siguen_en_parcial` | Varias ejecuciones parciales siguen en `parcial` |
+| ST-06 | `test_cancelar_una_orden_abierta` | Cancelar una orden abierta → `cancelada` |
+| ST-07 | `test_cancelar_una_orden_parcial_conserva_lo_ya_ejecutado` | Cancelar una parcial conserva lo ya ejecutado |
+| ST-08 | `test_cantidades_decimales_no_dejan_residuos` | Cantidades decimales no dejan residuos |
+| ST-09 | `test_una_orden_completada_no_se_puede_ejecutar` | Completada no se puede ejecutar |
+| ST-10 | `test_una_orden_completada_no_se_puede_cancelar` | Completada no se puede cancelar |
+| ST-11 | `test_una_orden_cancelada_no_se_puede_ejecutar` | Cancelada no se puede ejecutar |
+| ST-12 | `test_una_orden_cancelada_no_se_puede_cancelar_otra_vez` | Cancelada no se puede cancelar otra vez |
+| ST-13 | `test_no_se_puede_ejecutar_mas_de_lo_pendiente` | No se ejecuta más de lo pendiente (estado intacto) |
+| ST-14 | `test_no_se_puede_ejecutar_una_cantidad_no_positiva` | Cantidad no positiva → `ValueError` |
+| ST-15 | `test_puede_negociar_depende_del_estado` | `puede_negociar()` según el estado (4 casos parametrizados) |
+| ST-16 | `test_el_historial_registra_cada_transicion` | Historial `abierta → parcial → completada` |
+| ST-17 | `test_un_rechazo_no_agrega_entradas_al_historial` | Un rechazo no agrega entradas al historial |
+| ST-18 | `test_los_estados_son_compartidos_entre_ordenes` | Los estados se comparten entre órdenes |
+| ST-19 | `test_transicion_invalida_es_un_value_error` | `TransicionInvalida` es un `ValueError` |
+| ST-20 | `test_no_se_puede_instanciar_el_estado_abstracto` | `EstadoOrden` abstracto → `TypeError` |
+
+## Casos de prueba — Visitor
+
+Verifica el doble despacho (cada nodo llama al método del visitante que
+corresponde a su clase), que cada visitante concreto calcula su análisis
+recorriendo todo el árbol y que un análisis nuevo no requiere cambiar el árbol.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| VI-01 | `test_la_hoja_llama_a_visitar_dispositivo` | La hoja llama a `visitar_dispositivo` |
+| VI-02 | `test_el_grupo_llama_a_visitar_grupo` | El grupo llama a `visitar_grupo` |
+| VI-03 | `test_el_recorrido_visita_todos_los_nodos_en_orden` | El recorrido visita todos los nodos en orden |
+| VI-04 | `test_un_visitante_nuevo_no_requiere_cambiar_el_arbol` | Un visitante nuevo no requiere cambiar el árbol |
+| VI-05 | `test_total_es_produccion_por_factor` | CO₂ total = producción × factor |
+| VI-06 | `test_desglosa_por_hogar` | CO₂ desglosado por hogar |
+| VI-07 | `test_el_consumo_no_suma_co2_evitado` | El consumo no suma CO₂ evitado |
+| VI-08 | `test_detecta_hogares_en_deficit` | Detecta hogares en déficit |
+| VI-09 | `test_detecta_dispositivos_sin_lecturas` | Detecta dispositivos sin lecturas |
+| VI-10 | `test_comunidad_sana_no_reporta_problemas` | Comunidad sana → sin problemas |
+| VI-11 | `test_una_fila_por_nodo_mas_encabezado` | Una fila CSV por nodo + encabezado |
+| VI-12 | `test_la_ruta_refleja_la_posicion_en_el_arbol` | La ruta CSV refleja la posición en el árbol |
+| VI-13 | `test_reutilizar_el_mismo_visitante_acumula_filas` | Reutilizar el visitante acumula filas |
+| VI-14 | `test_no_se_puede_instanciar_el_visitante_abstracto` | `VisitanteEnergetico` abstracto → `TypeError` |
+| VI-15 | `test_los_visitantes_concretos_implementan_la_interfaz` | Los visitantes concretos son `VisitanteEnergetico` |

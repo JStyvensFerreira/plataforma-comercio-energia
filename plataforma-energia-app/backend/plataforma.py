@@ -13,12 +13,32 @@ import copy
 import itertools
 import random
 
+from analisis_comunidad import crear_visitante
 from catalogo_dispositivos import fabrica_fichas
+from configuracion_hogar import ConfiguracionHogar, HistorialConfiguracion
+from coordinacion_hogar import (
+    CAPACIDAD_POR_BATERIA_KWH,
+    Bateria,
+    CentralEnergiaHogar,
+    Medidor,
+    PanelSolar,
+    PuntoMercado,
+)
+from estados_orden import ABIERTA, EstadoOrden
+from eventos_mercado import (
+    ORDEN_CANCELADA,
+    ORDEN_PUBLICADA,
+    TRANSACCION_EJECUTADA,
+    AlertaPrecio,
+    EstadisticasMercado,
+    MercadoEventos,
+)
 from factory_method import DispositivoIoT, crear_dispositivo
 from jerarquia import DispositivoHoja, GrupoEnergetico
 from notificaciones import Mensaje, crear_servicio, obtener_canal
 from pagos import obtener_pasarela
 from precios import CostoBase, CostoEnergia, aplicar_ajustes
+from recorrido_ordenes import COMPRA, VENTA, LibroOrdenes
 from reportes import DatosReporte, DirectorReportes, crear_builder
 from sincronizacion import SincronizadorConReintentos, SincronizadorDispositivo, obtener_protocolo
 
@@ -74,17 +94,51 @@ class Usuario:
 
 @dataclass
 class Orden:
+    """
+    Context del patrón State: `ejecutar` y `cancelar` se delegan en el estado
+    actual (estados_orden.py), que decide si la operación está permitida y a
+    qué estado se pasa. La orden nunca cambia de estado por su cuenta.
+    """
+
     id: int
     usuario_id: str
     tipo: str
-    cantidad_kwh: float
+    cantidad_kwh: float  # pendiente por ejecutar
     precio_kwh: float
     timestamp: datetime = field(default_factory=datetime.now)
+    cantidad_inicial: float = field(init=False)
+    estado: EstadoOrden = field(default=ABIERTA, init=False)
+    historial_estados: list[str] = field(init=False)
+
+    def __post_init__(self):
+        self.cantidad_inicial = self.cantidad_kwh
+        self.historial_estados = [self.estado.nombre]
+
+    def cambiar_estado(self, nuevo: EstadoOrden) -> None:
+        self.estado = nuevo
+        self.historial_estados.append(nuevo.nombre)
+
+    def ejecutar(self, cantidad_kwh: float) -> None:
+        self.estado.ejecutar(self, cantidad_kwh)
+
+    def cancelar(self) -> None:
+        self.estado.cancelar(self)
+
+    def puede_negociar(self) -> bool:
+        return self.estado.puede_negociar()
 
     def to_dict(self):
-        d = asdict(self)
-        d["timestamp"] = self.timestamp.isoformat()
-        return d
+        return {
+            "id": self.id,
+            "usuario_id": self.usuario_id,
+            "tipo": self.tipo,
+            "cantidad_kwh": self.cantidad_kwh,
+            "cantidad_inicial": self.cantidad_inicial,
+            "precio_kwh": self.precio_kwh,
+            "timestamp": self.timestamp.isoformat(),
+            "estado": self.estado.nombre,
+            "historial_estados": list(self.historial_estados),
+        }
 
 
 class PlataformaEnergia(metaclass=SingletonMeta):
@@ -101,6 +155,19 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         self.notificaciones: dict[str, list[dict]] = {}
         # Bandeja de pagos por usuario (patrón Adapter).
         self.pagos: dict[str, list[dict]] = {}
+        # Órdenes completadas o canceladas (patrón State): ya no negocian.
+        self.ordenes_cerradas: list[Orden] = []
+        # Eventos del mercado (patrón Observer): las estadísticas siempre
+        # escuchan; las alertas de precio se suscriben por usuario.
+        self.mercado = MercadoEventos()
+        self.estadisticas_mercado = EstadisticasMercado()
+        self.mercado.suscribir(self.estadisticas_mercado)
+        self.alertas_precio: dict[str, AlertaPrecio] = {}
+        # Hogar de cada usuario: batería que coordina la central (Mediator) y
+        # configuración versionada con deshacer/rehacer (Memento).
+        self.baterias_hogar: dict[str, Bateria] = {}
+        self.configuraciones_hogar: dict[str, ConfiguracionHogar] = {}
+        self.historiales_configuracion: dict[str, HistorialConfiguracion] = {}
         self._contador_ordenes = itertools.count(1)
 
     def registrar_usuario(
@@ -243,6 +310,16 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                 hogar.agregar(DispositivoHoja(disp.id, disp.tipo, self.lecturas_iot.get(disp.id, [])))
         return comunidad
 
+    # ---------- Análisis sobre el árbol (patrón Visitor) ----------
+    def analizar_comunidad(self, analisis: str) -> dict:
+        """
+        Recorre el árbol del Composite con el visitante pedido. Cada análisis
+        nuevo es una clase en analisis_comunidad.py; jerarquia.py no cambia.
+        """
+        visitante = crear_visitante(analisis)
+        self.arbol_energetico().aceptar(visitante)
+        return {"analisis": analisis, "resultado": visitante.resultado()}
+
     # ---------- Reporte energético (patrón Builder) ----------
     def _recolectar_datos_reporte(self, usuario_id: str) -> DatosReporte:
         """
@@ -304,28 +381,101 @@ class PlataformaEnergia(metaclass=SingletonMeta):
             "notificacion": registro,
         }
 
+    # ---------- Alertas de precio (patrón Observer) ----------
+    def _entregar_alerta_precio(self, usuario_id: str, orden: dict) -> None:
+        """Deja el aviso en la bandeja del usuario, por su canal preferido."""
+        usuario = self.usuarios.get(usuario_id)
+        canal = usuario.canal_notificacion if usuario else "email"
+        cuerpo = (
+            f"Oferta de {orden['usuario_id']}: {orden['cantidad_kwh']} kWh a "
+            f"{orden['precio_kwh']} $/kWh (orden #{orden['id']})"
+        )
+        self._guardar_notificacion(
+            usuario_id, Mensaje(canal=canal, asunto="Alerta de precio", cuerpo=cuerpo, datos=orden)
+        )
+
+    def suscribir_alerta_precio(self, usuario_id: str, precio_max: float) -> AlertaPrecio:
+        """Un usuario tiene a lo sumo una alerta: suscribir otra reemplaza la anterior."""
+        if precio_max <= 0:
+            raise ValueError("El precio máximo debe ser positivo")
+        self.desuscribir_alerta_precio(usuario_id)
+        alerta = AlertaPrecio(usuario_id, precio_max, self._entregar_alerta_precio)
+        self.alertas_precio[usuario_id] = alerta
+        self.mercado.suscribir(alerta)
+        return alerta
+
+    def desuscribir_alerta_precio(self, usuario_id: str) -> bool:
+        alerta = self.alertas_precio.pop(usuario_id, None)
+        if alerta is None:
+            return False
+        self.mercado.desuscribir(alerta)
+        return True
+
     def publicar_venta(self, usuario_id: str, cantidad_kwh: float, precio_kwh: float) -> Orden:
         orden = Orden(next(self._contador_ordenes), usuario_id, "venta", cantidad_kwh, precio_kwh)
         self.ordenes_venta.append(orden)
+        self.mercado.notificar(ORDEN_PUBLICADA, orden.to_dict())
         return orden
 
     def publicar_compra(self, usuario_id: str, cantidad_kwh: float, precio_kwh: float) -> Orden:
         orden = Orden(next(self._contador_ordenes), usuario_id, "compra", cantidad_kwh, precio_kwh)
         self.ordenes_compra.append(orden)
+        self.mercado.notificar(ORDEN_PUBLICADA, orden.to_dict())
         return orden
 
-    def ejecutar_subasta(self) -> list[dict]:
-        self.ordenes_venta.sort(key=lambda o: o.precio_kwh)
-        self.ordenes_compra.sort(key=lambda o: -o.precio_kwh)
+    # ---------- Ciclo de vida de la orden (patrón State) ----------
+    def _archivar_ordenes_cerradas(self) -> None:
+        for lista in (self.ordenes_venta, self.ordenes_compra):
+            self.ordenes_cerradas += [o for o in lista if not o.puede_negociar()]
+        self.ordenes_venta = [o for o in self.ordenes_venta if o.puede_negociar()]
+        self.ordenes_compra = [o for o in self.ordenes_compra if o.puede_negociar()]
 
+    def cancelar_orden(self, usuario_id: str, orden_id: int) -> Orden:
+        """
+        Retira una orden del mercado. Si se puede o no lo decide su estado
+        actual: una orden completada o ya cancelada lanza TransicionInvalida.
+        """
+        orden = next(
+            (o for o in self.ordenes_venta + self.ordenes_compra + self.ordenes_cerradas if o.id == orden_id),
+            None,
+        )
+        if orden is None:
+            raise LookupError(f"La orden {orden_id} no existe")
+        if orden.usuario_id != usuario_id:
+            raise PermissionError(f"La orden {orden_id} no pertenece a '{usuario_id}'")
+        orden.cancelar()
+        self._archivar_ordenes_cerradas()
+        self.mercado.notificar(ORDEN_CANCELADA, orden.to_dict())
+        return orden
+
+    # ---------- Recorridos del libro de órdenes (patrón Iterator) ----------
+    def libro_ordenes(self) -> LibroOrdenes:
+        return LibroOrdenes(self.ordenes_venta, self.ordenes_compra)
+
+    def listar_ordenes(self, recorrido: str = "llegada", usuario_id: Optional[str] = None) -> dict:
+        """El cliente elige CÓMO recorrer el libro; las listas internas no salen de aquí."""
+        libro = self.libro_ordenes()
+        return {
+            "recorrido": recorrido,
+            "ventas": [o.to_dict() for o in libro.recorrer(recorrido, VENTA, usuario_id)],
+            "compras": [o.to_dict() for o in libro.recorrer(recorrido, COMPRA, usuario_id)],
+        }
+
+    def ejecutar_subasta(self) -> list[dict]:
+        # Prioridad precio-tiempo por iteradores (Iterator): ya no se
+        # reordenan en sitio las listas que ven los demás clientes.
+        libro = self.libro_ordenes()
         transacciones = []
-        for compra in list(self.ordenes_compra):
-            for venta in list(self.ordenes_venta):
-                if compra.precio_kwh >= venta.precio_kwh and compra.cantidad_kwh > 0 and venta.cantidad_kwh > 0:
+        for compra in libro.negociables(COMPRA):
+            for venta in libro.negociables(VENTA):
+                if venta.precio_kwh > compra.precio_kwh:
+                    break  # las ventas siguientes son aún más caras
+                if compra.puede_negociar() and venta.puede_negociar():
                     cantidad = min(compra.cantidad_kwh, venta.cantidad_kwh)
                     precio_final = venta.precio_kwh
-                    compra.cantidad_kwh -= cantidad
-                    venta.cantidad_kwh -= cantidad
+                    # Cada orden pasa a parcial o completada según su estado (State).
+                    compra.ejecutar(cantidad)
+                    venta.ejecutar(cantidad)
 
                     # Precio final = costo base + capas de ajuste (Decorator).
                     momento = datetime.now()
@@ -355,11 +505,13 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                         )
                         self._guardar_notificacion(usuario_id, mensaje)
 
-                    if compra.cantidad_kwh == 0:
+                    # Aviso a quien esté escuchando el mercado (Observer).
+                    self.mercado.notificar(TRANSACCION_EJECUTADA, tx)
+
+                    if not compra.puede_negociar():
                         break
 
-        self.ordenes_venta = [o for o in self.ordenes_venta if o.cantidad_kwh > 0]
-        self.ordenes_compra = [o for o in self.ordenes_compra if o.cantidad_kwh > 0]
+        self._archivar_ordenes_cerradas()
         return transacciones
 
     def conectar_dispositivo(
@@ -467,3 +619,94 @@ class PlataformaEnergia(metaclass=SingletonMeta):
 
     def catalogo_dispositivos(self) -> list[dict]:
         return [fabrica_fichas.obtener_ficha(t).to_dict() for t in fabrica_fichas.tipos_disponibles]
+
+    # ---------- Configuración del hogar (patrón Memento) ----------
+    def _configuracion(self, usuario_id: str) -> tuple[ConfiguracionHogar, HistorialConfiguracion]:
+        if usuario_id not in self.configuraciones_hogar:
+            config = ConfiguracionHogar()
+            self.configuraciones_hogar[usuario_id] = config
+            self.historiales_configuracion[usuario_id] = HistorialConfiguracion(config)
+        return self.configuraciones_hogar[usuario_id], self.historiales_configuracion[usuario_id]
+
+    def configuracion_hogar(self, usuario_id: str) -> dict:
+        config, historial = self._configuracion(usuario_id)
+        return {
+            "configuracion": config.to_dict(),
+            "versiones": historial.versiones(),
+            "puede_deshacer": historial.puede_deshacer,
+            "puede_rehacer": historial.puede_rehacer,
+            "bateria": self._bateria_hogar(usuario_id).to_dict(),
+        }
+
+    def cambiar_configuracion_hogar(self, usuario_id: str, etiqueta: str, **cambios) -> dict:
+        """El Caretaker respalda la versión actual antes de aplicar el cambio."""
+        _, historial = self._configuracion(usuario_id)
+        historial.cambiar(etiqueta or "cambio sin nombre", **cambios)
+        return self.configuracion_hogar(usuario_id)
+
+    def deshacer_configuracion_hogar(self, usuario_id: str) -> dict:
+        memento = self._configuracion(usuario_id)[1].deshacer()  # SinVersiones si no hay
+        return {**self.configuracion_hogar(usuario_id), "deshecho": memento.etiqueta}
+
+    def rehacer_configuracion_hogar(self, usuario_id: str) -> dict:
+        memento = self._configuracion(usuario_id)[1].rehacer()
+        return {**self.configuracion_hogar(usuario_id), "rehecho": memento.etiqueta}
+
+    # ---------- Central de energía del hogar (patrón Mediator) ----------
+    def _dispositivos_de(self, usuario_id: str, tipo: str) -> list[DispositivoIoT]:
+        return [d for d in self.dispositivos.values() if d.usuario_id == usuario_id and d.tipo == tipo]
+
+    def _bateria_hogar(self, usuario_id: str) -> Bateria:
+        """Capacidad = 10 kWh por cada batería conectada; arranca a media carga."""
+        capacidad = CAPACIDAD_POR_BATERIA_KWH * len(self._dispositivos_de(usuario_id, "bateria"))
+        bateria = self.baterias_hogar.get(usuario_id)
+        if bateria is None:
+            bateria = Bateria("batería", capacidad, capacidad / 2)
+            self.baterias_hogar[usuario_id] = bateria
+        elif bateria.capacidad_kwh != capacidad:
+            bateria.ajustar_capacidad(capacidad)
+        return bateria
+
+    def _ultima_lectura_total(self, usuario_id: str, tipo: str) -> Optional[float]:
+        lecturas = [
+            abs(self.lecturas_iot[d.id][-1])
+            for d in self._dispositivos_de(usuario_id, tipo)
+            if self.lecturas_iot.get(d.id)
+        ]
+        return round(sum(lecturas), 6) if lecturas else None
+
+    def coordinar_hogar(
+        self, usuario_id: str, generacion_kwh: Optional[float] = None, consumo_kwh: Optional[float] = None
+    ) -> dict:
+        """
+        Un intervalo de la central: panel, medidor, batería y mercado solo
+        hablan con CentralEnergiaHogar. Si no se indican los kWh, se toma la
+        última lectura de los paneles y medidores del usuario.
+        """
+        if generacion_kwh is None:
+            generacion_kwh = self._ultima_lectura_total(usuario_id, "panel_solar")
+        if consumo_kwh is None:
+            consumo_kwh = self._ultima_lectura_total(usuario_id, "medidor")
+        if generacion_kwh is None or consumo_kwh is None:
+            raise ValueError(
+                "Faltan datos: indica generación y consumo, o conecta un panel solar y un medidor con lecturas"
+            )
+
+        config, _ = self._configuracion(usuario_id)
+        mercado = PuntoMercado(
+            lambda kwh, precio: self.publicar_venta(usuario_id, kwh, precio).to_dict(),
+            lambda kwh, precio: self.publicar_compra(usuario_id, kwh, precio).to_dict(),
+        )
+        panel, medidor = PanelSolar("panel solar"), Medidor("medidor")
+        central = CentralEnergiaHogar(panel, medidor, self._bateria_hogar(usuario_id), mercado, config)
+
+        panel.reportar_generacion(generacion_kwh)
+        medidor.reportar_consumo(consumo_kwh)
+        return {
+            "generacion_kwh": generacion_kwh,
+            "consumo_kwh": consumo_kwh,
+            "registro": central.registro,
+            "ordenes_publicadas": mercado.ordenes,
+            "bateria": central.bateria.to_dict(),
+            "reglas": config.to_dict(),
+        }
