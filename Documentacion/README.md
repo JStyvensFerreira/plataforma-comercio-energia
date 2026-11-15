@@ -88,19 +88,33 @@ Documentacion/
 │   ├── test_mediator.py
 │   ├── test_memento.py
 │   └── conftest.py                  # compartido por los tres patrones
-└── Semana 14/                       # Observer + State + Visitor (comportamiento)
-    ├── Patron Observer.md
-    ├── Patron State.md
-    ├── Patron Visitor.md
-    ├── UML_Observer.png
-    ├── UML_State.png
-    ├── UML_Visitor.png
-    ├── observer.py
-    ├── state.py
-    ├── visitor.py
-    ├── test_observer.py
-    ├── test_state.py
-    ├── test_visitor.py
+├── Semana 14/                       # Observer + State + Visitor (comportamiento)
+│   ├── Patron Observer.md
+│   ├── Patron State.md
+│   ├── Patron Visitor.md
+│   ├── UML_Observer.png
+│   ├── UML_State.png
+│   ├── UML_Visitor.png
+│   ├── observer.py
+│   ├── state.py
+│   ├── visitor.py
+│   ├── test_observer.py
+│   ├── test_state.py
+│   ├── test_visitor.py
+│   └── conftest.py                  # compartido por los tres patrones
+└── Semana 15/                       # Command + Strategy + Template Method (comportamiento)
+    ├── Patron Command.md
+    ├── Patron Strategy.md
+    ├── Patron Template Method.md
+    ├── UML_Command.png
+    ├── UML_Strategy.png
+    ├── UML_TemplateMethod.png
+    ├── command.py
+    ├── strategy.py
+    ├── template_method.py
+    ├── test_command.py
+    ├── test_strategy.py
+    ├── test_template_method.py
     └── conftest.py                  # compartido por los tres patrones
 ```
 
@@ -128,6 +142,9 @@ junto con una sección de evaluación de si el patrón se justifica para el proy
 | Observer | 14 | [`Patron Observer.md`](Semana%2014/Patron%20Observer.md) | [`observer.py`](Semana%2014/observer.py) | [`test_observer.py`](Semana%2014/test_observer.py) | [`UML_Observer.png`](Semana%2014/UML_Observer.png) |
 | State | 14 | [`Patron State.md`](Semana%2014/Patron%20State.md) | [`state.py`](Semana%2014/state.py) | [`test_state.py`](Semana%2014/test_state.py) | [`UML_State.png`](Semana%2014/UML_State.png) |
 | Visitor | 14 | [`Patron Visitor.md`](Semana%2014/Patron%20Visitor.md) | [`visitor.py`](Semana%2014/visitor.py) | [`test_visitor.py`](Semana%2014/test_visitor.py) | [`UML_Visitor.png`](Semana%2014/UML_Visitor.png) |
+| Command | 15 | [`Patron Command.md`](Semana%2015/Patron%20Command.md) | [`command.py`](Semana%2015/command.py) | [`test_command.py`](Semana%2015/test_command.py) | [`UML_Command.png`](Semana%2015/UML_Command.png) |
+| Strategy | 15 | [`Patron Strategy.md`](Semana%2015/Patron%20Strategy.md) | [`strategy.py`](Semana%2015/strategy.py) | [`test_strategy.py`](Semana%2015/test_strategy.py) | [`UML_Strategy.png`](Semana%2015/UML_Strategy.png) |
+| Template Method | 15 | [`Patron Template Method.md`](Semana%2015/Patron%20Template%20Method.md) | [`template_method.py`](Semana%2015/template_method.py) | [`test_template_method.py`](Semana%2015/test_template_method.py) | [`UML_TemplateMethod.png`](Semana%2015/UML_TemplateMethod.png) |
 
 ## Cómo ejecutar
 
@@ -155,26 +172,29 @@ python -m pytest -v                                 # detalle por caso (por defe
 ## Resultado esperado
 
 ```
-Documentacion\Semana 2\test_singleton.py ..................              [  5%]
-Documentacion\Semana 3\test_factory_method.py ................           [ 10%]
-Documentacion\Semana 4\test_abstract_factory.py ...........................[ 17%]
-Documentacion\Semana 5\test_builder.py ..............................    [ 26%]
-Documentacion\Semana 6\test_prototype.py ........................        [ 33%]
-Documentacion\Semana 7\test_adapter.py .................                 [ 38%]
-Documentacion\Semana 8\test_composite.py .....................           [ 44%]
-Documentacion\Semana 8\test_decorator.py ........................        [ 51%]
-Documentacion\Semana 9\test_bridge.py ..................                 [ 56%]
-Documentacion\Semana 9\test_facade.py ............                       [ 59%]
-Documentacion\Semana 10\test_flyweight.py .........                      [ 62%]
-Documentacion\Semana 10\test_proxy.py ............                       [ 65%]
-Documentacion\Semana 13\test_iterator.py ..........................      [ 73%]
-Documentacion\Semana 13\test_mediator.py ......................          [ 79%]
-Documentacion\Semana 13\test_memento.py ..................               [ 84%]
-Documentacion\Semana 14\test_observer.py ..................              [ 89%]
-Documentacion\Semana 14\test_state.py .......................            [ 96%]
-Documentacion\Semana 14\test_visitor.py ...............                  [100%]
+Documentacion\Semana 2\test_singleton.py ..................              [  4%]
+Documentacion\Semana 3\test_factory_method.py ................           [  8%]
+Documentacion\Semana 4\test_abstract_factory.py ...........................[ 15%]
+Documentacion\Semana 5\test_builder.py ..............................    [ 22%]
+Documentacion\Semana 6\test_prototype.py ........................        [ 28%]
+Documentacion\Semana 7\test_adapter.py .................                 [ 32%]
+Documentacion\Semana 8\test_composite.py .....................           [ 37%]
+Documentacion\Semana 8\test_decorator.py ........................        [ 43%]
+Documentacion\Semana 9\test_bridge.py ..................                 [ 48%]
+Documentacion\Semana 9\test_facade.py ............                       [ 51%]
+Documentacion\Semana 10\test_flyweight.py .........                      [ 53%]
+Documentacion\Semana 10\test_proxy.py ............                       [ 56%]
+Documentacion\Semana 13\test_iterator.py ..........................      [ 62%]
+Documentacion\Semana 13\test_mediator.py ......................          [ 67%]
+Documentacion\Semana 13\test_memento.py ..................               [ 72%]
+Documentacion\Semana 14\test_observer.py ..................              [ 76%]
+Documentacion\Semana 14\test_state.py .......................            [ 82%]
+Documentacion\Semana 14\test_visitor.py ...............                  [ 86%]
+Documentacion\Semana 15\test_command.py .................                [ 90%]
+Documentacion\Semana 15\test_strategy.py .......................         [ 95%]
+Documentacion\Semana 15\test_template_method.py ...................      [100%]
 
-350 passed
+409 passed
 ```
 
 ---
@@ -673,3 +693,81 @@ recorriendo todo el árbol y que un análisis nuevo no requiere cambiar el árbo
 | VI-13 | `test_reutilizar_el_mismo_visitante_acumula_filas` | Reutilizar el visitante acumula filas |
 | VI-14 | `test_no_se_puede_instanciar_el_visitante_abstracto` | `VisitanteEnergetico` abstracto → `TypeError` |
 | VI-15 | `test_los_visitantes_concretos_implementan_la_interfaz` | Los visitantes concretos son `VisitanteEnergetico` |
+
+## Casos de prueba — Command
+
+Verifica que cada operación del mercado es un objeto con `ejecutar` y `deshacer`;
+que el gestor (Invoker) programa operaciones en una cola, las ejecuta en lote,
+lleva un historial y deshace la última sin llamar al mercado directamente; y que
+un comando que falla no entra al historial ni detiene al resto del lote.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| CM-01 | `test_crear_el_comando_no_ejecuta_nada` | Crear el comando no ejecuta nada |
+| CM-02 | `test_publicar_venta_y_deshacer` | Publicar venta y deshacer |
+| CM-03 | `test_publicar_compra` | Publicar compra |
+| CM-04 | `test_cancelar_y_deshacer_reabre_la_orden` | Cancelar y deshacer reabre la orden |
+| CM-05 | `test_descripcion_legible` | Descripción legible |
+| CM-06 | `test_la_interfaz_no_se_puede_instanciar` | La interfaz no se puede instanciar |
+| CM-07 | `test_cancelar_invalido` | Cancelar inválido (parametrizado) |
+| CM-08 | `test_programar_no_ejecuta` | Programar no ejecuta |
+| CM-09 | `test_ejecutar_pendientes_en_orden` | Ejecutar pendientes en orden |
+| CM-10 | `test_un_fallo_no_detiene_el_lote_ni_entra_al_historial` | Un fallo no detiene el lote ni entra al historial |
+| CM-11 | `test_deshacer_revierte_en_orden_inverso` | Deshacer revierte en orden inverso |
+| CM-12 | `test_deshacer_sin_historial_falla` | Deshacer sin historial falla |
+| CM-13 | `test_si_deshacer_falla_el_comando_sigue_en_el_historial` | Si deshacer falla, el comando sigue en el historial |
+| CM-14 | `test_descartar_pendientes` | Descartar pendientes |
+| CM-15 | `test_el_registro_guarda_todo_lo_que_paso` | El registro guarda todo lo que pasó |
+| CM-16 | `test_el_gestor_funciona_con_cualquier_comando` | El gestor funciona con cualquier comando |
+
+## Casos de prueba — Strategy
+
+Verifica que cada regla de precio de cierre está encapsulada en su propia
+estrategia; que el motor de subasta (Context) delega el precio en la estrategia
+configurada sin conocer cuál es; que se puede cambiar en tiempo de ejecución; y
+que el emparejamiento no depende de la estrategia elegida.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| SG-01 | `test_precio_vendedor_cobra_lo_que_pide_la_venta` | Precio vendedor cobra lo que pide la venta |
+| SG-02 | `test_precio_comprador_cobra_lo_que_ofrece_la_compra` | Precio comprador cobra lo que ofrece la compra |
+| SG-03 | `test_punto_medio_reparte_la_diferencia` | Punto medio reparte la diferencia |
+| SG-04 | `test_punto_medio_redondea_a_dos_decimales` | Punto medio redondea a dos decimales |
+| SG-05 | `test_el_precio_queda_entre_venta_y_compra` | El precio queda entre venta y compra (parametrizado) |
+| SG-06 | `test_todas_cumplen_la_interfaz_y_tienen_descripcion` | Todas cumplen la interfaz y tienen descripción (parametrizado) |
+| SG-07 | `test_la_interfaz_no_se_puede_instanciar` | La interfaz no se puede instanciar |
+| SG-08 | `test_estrategia_desconocida_falla` | Estrategia desconocida falla |
+| SG-09 | `test_usa_la_estrategia_inyectada` | Usa la estrategia inyectada |
+| SG-10 | `test_cambiar_la_estrategia_en_caliente` | Cambiar la estrategia en caliente |
+| SG-11 | `test_rechaza_algo_que_no_es_estrategia` | Rechaza algo que no es estrategia |
+| SG-12 | `test_el_emparejamiento_no_depende_de_la_estrategia` | El emparejamiento no depende de la estrategia |
+| SG-13 | `test_la_venta_mas_barata_se_cruza_primero` | La venta más barata se cruza primero |
+| SG-14 | `test_no_cruza_si_la_venta_es_mas_cara` | No cruza si la venta es más cara |
+| SG-15 | `test_descuenta_las_cantidades_ejecutadas` | Descuenta las cantidades ejecutadas |
+| SG-16 | `test_total_de_la_transaccion` | Total de la transacción |
+| SG-17 | `test_orden_invalida` | Orden inválida (parametrizado) |
+
+## Casos de prueba — Template Method
+
+Verifica que el método plantilla `liquidar` fija el orden de los pasos para
+todos los roles; que los pasos comunes se comparten; que cada subclase solo
+completa los pasos abstractos y los ganchos; y que una subclase que no redefine
+los ganchos obtiene su comportamiento por defecto.
+
+| # | Caso | Qué valida |
+|---|---|---|
+| TM-01 | `test_solo_cuenta_sus_compras_del_periodo` | Solo cuenta sus compras del periodo |
+| TM-02 | `test_suma_la_contribucion_de_red` | Suma la contribución de red |
+| TM-03 | `test_sin_compras_liquida_en_cero` | Sin compras liquida en cero |
+| TM-04 | `test_solo_cuenta_sus_ventas_del_periodo` | Solo cuenta sus ventas del periodo |
+| TM-05 | `test_descuenta_comision_y_retencion` | Descuenta comisión y retención |
+| TM-06 | `test_el_mismo_usuario_liquida_distinto_segun_el_rol` | El mismo usuario liquida distinto según el rol |
+| TM-07 | `test_la_clase_abstracta_no_se_puede_instanciar` | La clase abstracta no se puede instanciar |
+| TM-08 | `test_subclase_incompleta_no_se_puede_instanciar` | Subclase incompleta no se puede instanciar |
+| TM-09 | `test_los_ganchos_tienen_comportamiento_por_defecto` | Los ganchos tienen comportamiento por defecto |
+| TM-10 | `test_las_subclases_no_redefinen_el_metodo_plantilla` | Las subclases no redefinen el método plantilla |
+| TM-11 | `test_el_orden_de_los_pasos_es_fijo` | El orden de los pasos es fijo |
+| TM-12 | `test_periodo_invalido_falla_en_el_primer_paso` | Periodo inválido falla en el primer paso (parametrizado) |
+| TM-13 | `test_otro_periodo_cambia_el_resultado` | Otro periodo cambia el resultado |
+| TM-14 | `test_crear_liquidacion_por_rol` | Crear liquidación por rol (parametrizado) |
+| TM-15 | `test_rol_desconocido_falla` | Rol desconocido falla |

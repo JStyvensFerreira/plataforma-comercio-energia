@@ -20,9 +20,12 @@ from pydantic import BaseModel
 from analisis_comunidad import VISITANTES_DISPONIBLES
 from configuracion_hogar import SinVersiones
 from estados_orden import TransicionInvalida
+from estrategias_precio import ESTRATEGIAS_DISPONIBLES
 from factory_method import TIPOS_DISPONIBLES
+from liquidaciones import LIQUIDACIONES_DISPONIBLES
 from notificaciones import CANALES_DISPONIBLES
 from onboarding import OnboardingDispositivo
+from operaciones_mercado import COMANDOS_DISPONIBLES, OperacionInvalida
 from pagos import PASARELAS_DISPONIBLES
 from plataforma import PlataformaEnergia
 from precios import AJUSTES_DISPONIBLES, obtener_ajuste
@@ -136,6 +139,17 @@ class ConfiguracionHogarIn(BaseModel):
     vender_excedente: bool | None = None
 
 
+class EstrategiaPrecioIn(BaseModel):
+    estrategia: str  # "vendedor" | "comprador" | "punto_medio"
+
+
+class OperacionIn(BaseModel):
+    tipo: str  # "publicar_venta" | "publicar_compra" | "cancelar_orden"
+    cantidad_kwh: float | None = None
+    precio_kwh: float | None = None
+    orden_id: int | None = None
+
+
 class CotizacionIn(BaseModel):
     cantidad_kwh: float
     precio_kwh: float
@@ -243,6 +257,78 @@ def listar_ordenes(recorrido: str = "llegada", usuario: str | None = None):
 @app.post("/subasta/ejecutar")
 def ejecutar_subasta():
     return plataforma.ejecutar_subasta()
+
+
+# ---------- Precio de cierre de la subasta (patrón Strategy) ----------
+@app.get("/subasta/estrategia")
+def ver_estrategia_precio():
+    """Regla activa y las disponibles (una estrategia concreta por regla)."""
+    return {
+        "actual": plataforma.estrategia_precio.to_dict(),
+        "disponibles": [e().to_dict() for e in ESTRATEGIAS_DISPONIBLES.values()],
+    }
+
+
+@app.put("/subasta/estrategia")
+def cambiar_estrategia_precio(datos: EstrategiaPrecioIn, usuario_id: str = Depends(usuario_actual)):
+    """Cambia la regla en caliente: la próxima subasta ya cierra con ella."""
+    try:
+        return {"actual": plataforma.cambiar_estrategia_precio(datos.estrategia).to_dict()}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ---------- Liquidación del periodo (patrón Template Method) ----------
+@app.get("/liquidacion")
+def mi_liquidacion(rol: str = "comprador", periodo: str | None = None, usuario_id: str = Depends(usuario_actual)):
+    """
+    Liquida el periodo (AAAA-MM, por defecto el actual) con el método
+    plantilla: mismos pasos para `comprador` y `vendedor`, cada rol completa
+    qué transacciones son suyas y qué cargos aplican.
+    """
+    try:
+        return plataforma.liquidar_periodo(usuario_id, rol, periodo)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/liquidacion/roles")
+def roles_liquidacion():
+    return {"roles": list(LIQUIDACIONES_DISPONIBLES)}
+
+
+# ---------- Operaciones programadas y reversibles (patrón Command) ----------
+@app.get("/operaciones")
+def mis_operaciones(usuario_id: str = Depends(usuario_actual)):
+    return {**plataforma.gestor_operaciones(usuario_id).to_dict(), "tipos": list(COMANDOS_DISPONIBLES)}
+
+
+@app.post("/operaciones")
+def programar_operacion(datos: OperacionIn, usuario_id: str = Depends(usuario_actual)):
+    """Guarda la operación como comando pendiente; no toca el mercado todavía."""
+    try:
+        return plataforma.programar_operacion(usuario_id, datos.tipo, **datos.model_dump(exclude={"tipo"}, exclude_none=True))
+    except OperacionInvalida as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/operaciones/ejecutar")
+def ejecutar_operaciones(usuario_id: str = Depends(usuario_actual)):
+    """Ejecuta la cola en orden; las que fallan se informan y no detienen al resto."""
+    return plataforma.ejecutar_operaciones(usuario_id)
+
+
+@app.post("/operaciones/deshacer")
+def deshacer_operacion(usuario_id: str = Depends(usuario_actual)):
+    try:
+        return plataforma.deshacer_operacion(usuario_id)
+    except OperacionInvalida as e:
+        raise HTTPException(409, str(e))
+
+
+@app.delete("/operaciones/pendientes")
+def descartar_operaciones(usuario_id: str = Depends(usuario_actual)):
+    return plataforma.descartar_operaciones(usuario_id)
 
 
 # ---------- Ciclo de vida de la orden (patrón State) ----------

@@ -216,6 +216,7 @@
     <button :class="{active: tab==='pagos'}" @click="tab='pagos'; cargarPagos()">Pagos</button>
     <button :class="{active: tab==='comunidad'}" @click="tab='comunidad'; cargarArbol()">Comunidad</button>
     <button :class="{active: tab==='hogar'}" @click="tab='hogar'; cargarConfiguracionHogar()">Mi hogar</button>
+    <button :class="{active: tab==='operaciones'}" @click="tab='operaciones'; cargarOperaciones(); cargarLiquidacion()">Operaciones</button>
   </nav>
 
   <main v-if="usuarioActual">
@@ -287,6 +288,16 @@
           <label style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
             <input type="checkbox" v-model="soloMisOrdenes" @change="cargarOrdenes" style="width:auto;" /> Solo mis órdenes
           </label>
+          <div>
+            <label>Precio de cierre <span class="badge">Strategy</span></label>
+            <select v-model="estrategiaPrecio" @change="cambiarEstrategia">
+              <option v-for="e in estrategiasPrecio" :key="e.nombre" :value="e.nombre">{{ nombreEstrategia(e.nombre) }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="helper" style="margin-top:4px;" v-if="estrategiaActual">
+          La subasta empareja igual con cualquier regla; solo cambia el precio al que cierra cada cruce:
+          <b>{{ estrategiaActual.descripcion }}</b>.
         </div>
         <div class="helper" style="margin-top:4px;">
           El libro entrega un <b>iterador</b> por recorrido sin exponer sus listas: «prioridad» es el mismo que usa la subasta
@@ -872,6 +883,82 @@
       </div>
     </section>
 
+    <!-- OPERACIONES -->
+    <section v-if="tab==='operaciones'">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Operaciones programadas <span class="badge">Command</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            Cada operación es un <b>comando</b>: se guarda en la cola sin tocar el mercado, se ejecutan todas juntas
+            y la última ejecutada se puede deshacer. Deshacer una publicación cancela la orden; deshacer una
+            cancelación vuelve a publicar lo que le quedaba pendiente.
+          </div>
+          <label>Operación</label>
+          <select v-model="operacionForm.tipo">
+            <option value="publicar_venta">Publicar venta</option>
+            <option value="publicar_compra">Publicar compra</option>
+            <option value="cancelar_orden">Cancelar una orden mía</option>
+          </select>
+          <div class="grid cols-2" v-if="operacionForm.tipo !== 'cancelar_orden'">
+            <div><label>Cantidad (kWh)</label><input type="number" v-model.number="operacionForm.cantidad_kwh" min="0" step="0.1" /></div>
+            <div><label>Precio ($/kWh)</label><input type="number" v-model.number="operacionForm.precio_kwh" min="0" step="0.01" /></div>
+          </div>
+          <div v-else>
+            <label>Orden</label>
+            <select v-model.number="operacionForm.orden_id">
+              <option v-for="o in misOrdenesActivas" :key="o.id" :value="o.id">#{{ o.id }} {{ o.tipo }} · {{ o.cantidad_kwh }} kWh @ ${{ o.precio_kwh }}</option>
+            </select>
+            <div class="helper" v-if="!misOrdenesActivas.length">No tienes órdenes activas.</div>
+          </div>
+          <button class="btn" @click="programarOperacion">Agregar a la cola</button>
+          <button class="btn secondary" :disabled="!operaciones || !operaciones.pendientes.length" @click="ejecutarOperaciones">Ejecutar pendientes</button>
+          <button class="btn ghost" :disabled="!operaciones || !operaciones.puede_deshacer" @click="deshacerOperacion">↶ Deshacer última</button>
+          <button class="btn ghost" :disabled="!operaciones || !operaciones.pendientes.length" @click="descartarOperaciones">Vaciar cola</button>
+          <div v-if="operaciones" style="margin-top:12px;">
+            <div class="helper"><b>Pendientes ({{ operaciones.pendientes.length }})</b></div>
+            <div class="helper" v-for="(c, i) in operaciones.pendientes" :key="'p'+i">{{ i + 1 }}. {{ c.descripcion }}</div>
+            <div class="helper" style="margin-top:6px;"><b>Ejecutadas ({{ operaciones.ejecutados.length }})</b></div>
+            <div class="helper" v-for="(c, i) in operaciones.ejecutados" :key="'e'+i">{{ i + 1 }}. {{ c.descripcion }}</div>
+            <div class="helper" style="margin-top:6px;" v-if="operaciones.registro.length"><b>Registro</b></div>
+            <div class="helper" v-for="(r, i) in [...operaciones.registro].reverse().slice(0, 8)" :key="'r'+i">
+              <span class="badge">{{ r.evento }}</span> {{ r.operacion }}<span v-if="r.detalle"> — {{ r.detalle }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Liquidación del periodo <span class="badge">Template Method</span></h3>
+          <div class="helper" style="margin-bottom:8px;">
+            Comprador y vendedor siguen el <b>mismo algoritmo</b> (validar el periodo → tomar tus transacciones →
+            sumar → aplicar cargos → neto); cada rol solo completa sus pasos: qué importe cuenta y qué cargos aplican.
+          </div>
+          <div class="grid cols-2">
+            <div>
+              <label>Rol</label>
+              <select v-model="liquidacionForm.rol" @change="cargarLiquidacion">
+                <option value="comprador">Comprador</option>
+                <option value="vendedor">Vendedor</option>
+              </select>
+            </div>
+            <div><label>Periodo</label><input type="month" v-model="liquidacionForm.periodo" @change="cargarLiquidacion" /></div>
+          </div>
+          <div v-if="liquidacion" style="margin-top:8px;">
+            <table>
+              <tbody>
+                <tr><td style="font-family:Inter;">Transacciones</td><td>{{ liquidacion.movimientos }} ({{ liquidacion.energia_kwh }} kWh)</td></tr>
+                <tr><td style="font-family:Inter;">Bruto</td><td>{{ dinero(liquidacion.bruto) }}</td></tr>
+                <tr v-for="(c, i) in liquidacion.cargos" :key="i">
+                  <td style="font-family:Inter;">{{ c.concepto }}</td><td>{{ liquidacion.rol === 'vendedor' ? '−' : '+' }}{{ dinero(c.valor) }}</td>
+                </tr>
+                <tr><td style="font-family:Inter;"><b>{{ liquidacion.concepto }}</b></td><td><b>{{ dinero(liquidacion.neto) }}</b></td></tr>
+              </tbody>
+            </table>
+            <div class="empty" v-if="!liquidacion.movimientos">No tienes transacciones como {{ liquidacion.rol }} en {{ liquidacion.periodo }}.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <div class="toast" :class="{error: toast.error}" v-if="toast.msg">{{ toast.msg }}</div>
@@ -938,6 +1025,12 @@ createApp({
       configForm: { etiqueta: '', reserva_minima_pct: 20, precio_venta_kwh: 0.15, precio_compra_max_kwh: 0.20, vender_excedente: true },
       intervaloHogar: { generacion_kwh: null, consumo_kwh: null },
       resultadoHogar: null,
+      estrategiasPrecio: [],
+      estrategiaPrecio: 'vendedor',
+      operaciones: null,
+      operacionForm: { tipo: 'publicar_venta', cantidad_kwh: 5, precio_kwh: 0.15, orden_id: null },
+      liquidacion: null,
+      liquidacionForm: { rol: 'comprador', periodo: new Date().toISOString().slice(0, 7) },
       toast: { msg: '', error: false },
     }
   },
@@ -955,6 +1048,13 @@ createApp({
       };
       if(this.arbol) recorrer(this.arbol, 0);
       return filas;
+    },
+    estrategiaActual(){
+      return this.estrategiasPrecio.find(e => e.nombre === this.estrategiaPrecio) || null;
+    },
+    misOrdenesActivas(){
+      if(!this.usuarioActual) return [];
+      return [...this.ordenes.ventas, ...this.ordenes.compras].filter(o => o.usuario_id === this.usuarioActual.id);
     },
     authFormValido(){
       if(!this.authForm.id || !this.authForm.password) return false;
@@ -1028,7 +1128,7 @@ createApp({
       return r;
     },
     async refrescarTodo(){
-      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos(), this.cargarCatalogo(), this.cargarAuditoria(), this.cargarAlerta(), this.cargarAnalisisDisponibles()]);
+      await Promise.all([this.cargarUsuarios(), this.cargarDispositivos(), this.cargarOrdenes(), this.cargarTransacciones(), this.cargarNotificaciones(), this.cargarAjustes(), this.cargarProtocolos(), this.cargarCatalogo(), this.cargarAuditoria(), this.cargarAlerta(), this.cargarAnalisisDisponibles(), this.cargarEstrategia()]);
     },
     async cargarAlerta(){
       if(!this.token) return;
@@ -1070,6 +1170,72 @@ createApp({
         if(!r.ok) throw new Error(data.detail || 'No se pudo cancelar');
         this.mostrarToast(`Orden #${id}: ${data.historial_estados.join(' → ')}`);
         this.cargarOrdenes();
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    nombreEstrategia(nombre){
+      return { vendedor: 'Precio del vendedor', comprador: 'Precio del comprador', punto_medio: 'Punto medio' }[nombre] || nombre;
+    },
+    async cargarEstrategia(){
+      try{
+        const data = await (await fetch(this.apiBase + '/subasta/estrategia')).json();
+        this.estrategiasPrecio = data.disponibles;
+        this.estrategiaPrecio = data.actual.nombre;
+      }catch(e){}
+    },
+    async cambiarEstrategia(){
+      // Se reemplaza la estrategia en caliente; la próxima subasta ya la usa (Strategy).
+      try{
+        const r = await this.peticionProtegida('/subasta/estrategia', {
+          method:'PUT', body: JSON.stringify({ estrategia: this.estrategiaPrecio })
+        });
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo cambiar la estrategia');
+        this.mostrarToast('Precio de cierre: ' + this.nombreEstrategia(data.actual.nombre));
+      }catch(e){ this.mostrarToast(e.message, true); this.cargarEstrategia(); }
+    },
+    async cargarOperaciones(){
+      try{
+        const r = await this.peticionProtegida('/operaciones');
+        if(r.ok) this.operaciones = await r.json();
+      }catch(e){}
+      this.cargarOrdenes();
+    },
+    async accionOperaciones(url, opciones, mensaje){
+      try{
+        const r = await this.peticionProtegida(url, opciones);
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo completar la operación');
+        this.operaciones = data;
+        this.mostrarToast(mensaje(data));
+        this.cargarOrdenes();
+      }catch(e){ this.mostrarToast(e.message, true); }
+    },
+    programarOperacion(){
+      const f = this.operacionForm;
+      const cuerpo = f.tipo === 'cancelar_orden'
+        ? { tipo: f.tipo, orden_id: f.orden_id }
+        : { tipo: f.tipo, cantidad_kwh: f.cantidad_kwh, precio_kwh: f.precio_kwh };
+      this.accionOperaciones('/operaciones', { method:'POST', body: JSON.stringify(cuerpo) },
+        d => `En cola: ${d.pendientes.length} operación(es) pendiente(s)`);
+    },
+    ejecutarOperaciones(){
+      this.accionOperaciones('/operaciones/ejecutar', { method:'POST' }, d =>
+        `Ejecutadas: ${d.lote.ejecutados.length}` + (d.lote.errores.length ? ` · fallidas: ${d.lote.errores.length}` : ''));
+    },
+    deshacerOperacion(){
+      this.accionOperaciones('/operaciones/deshacer', { method:'POST' }, d => 'Deshecho: ' + d.deshecho);
+    },
+    descartarOperaciones(){
+      this.accionOperaciones('/operaciones/pendientes', { method:'DELETE' }, d => `Cola vaciada (${d.descartadas})`);
+    },
+    async cargarLiquidacion(){
+      const params = new URLSearchParams({ rol: this.liquidacionForm.rol });
+      if(this.liquidacionForm.periodo) params.set('periodo', this.liquidacionForm.periodo);
+      try{
+        const r = await this.peticionProtegida('/liquidacion?' + params);
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.detail || 'No se pudo liquidar');
+        this.liquidacion = data;
       }catch(e){ this.mostrarToast(e.message, true); }
     },
     aplicarHogar(data){

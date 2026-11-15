@@ -1,6 +1,6 @@
 # Voltia — Plataforma de Comercio de Energía (Backend + Frontend)
 
-Implementación full-stack del proyecto #16. Usa dos patrones de diseño de forma
+Implementación full-stack del proyecto #16. Usa varios patrones de diseño de forma
 real:
 
 - **Singleton** (`plataforma.py`) — estado único compartido por todas las peticiones.
@@ -26,6 +26,13 @@ real:
   coordina panel solar, medidor, batería y mercado, que no se conocen entre sí.
 - **Memento** (`configuracion_hogar.py`) — la configuración del hogar guarda
   instantáneas inmutables para deshacer y rehacer cambios.
+- **Strategy** (`estrategias_precio.py`) — la regla de precio de cierre de la
+  subasta (vendedor, comprador o punto medio) es una estrategia intercambiable
+  en caliente.
+- **Template Method** (`liquidaciones.py`) — la liquidación del periodo sigue el
+  mismo algoritmo para comprador y vendedor; cada rol completa sus pasos.
+- **Command** (`operaciones_mercado.py`) — publicar venta, publicar compra y
+  cancelar orden son comandos que se programan, se ejecutan en lote y se deshacen.
 
 ## Estructura
 
@@ -43,6 +50,9 @@ plataforma-energia-app/
 │   ├── recorrido_ordenes.py # Recorridos del libro de órdenes (Iterator)
 │   ├── coordinacion_hogar.py # Central de energía del hogar (Mediator)
 │   ├── configuracion_hogar.py # Reglas del hogar con deshacer/rehacer (Memento)
+│   ├── estrategias_precio.py # Regla de precio de cierre de la subasta (Strategy)
+│   ├── liquidaciones.py     # Liquidación del periodo por rol (Template Method)
+│   ├── operaciones_mercado.py # Operaciones programadas y reversibles (Command)
 │   ├── main.py              # API FastAPI que expone los patrones
 │   └── requirements.txt
 └── frontend/
@@ -96,6 +106,9 @@ Al abrirlo, confirma que el campo de la API (arriba a la derecha) diga
 12. **Mercado → Libro de órdenes → Recorrido** → cambia entre «Por llegada» y «Prioridad de subasta», y marca «Solo mis órdenes» (Iterator)
 13. **IoT** → conecta un dispositivo `bateria`; luego **Mi hogar → Central de energía** → coordina un intervalo con generación 9 y consumo 2: la batería se carga y lo que no cabe se publica como venta en el libro (Mediator)
 14. **Mi hogar → Reglas del hogar** → cambia el precio de venta o desactiva «Vender excedente», guarda, y usa Deshacer/Rehacer; la próxima coordinación usa la versión vigente (Memento)
+15. **Mercado → Libro de órdenes → Precio de cierre** → elige «Punto medio», publica una venta a $0.14 y una compra a $0.20 y ejecuta la subasta: cierra a $0.17 y la transacción guarda la estrategia usada (Strategy)
+16. **Operaciones → Liquidación del periodo** → cambia entre Comprador y Vendedor: el mismo algoritmo da el total a pagar (con contribución del 2 %) o a recibir (descontando comisión 3 % y retención 1 %) (Template Method)
+17. **Operaciones → Operaciones programadas** → agrega a la cola una venta, una compra y la cancelación de una orden tuya; «Ejecutar pendientes» las aplica en orden y «Deshacer última» revierte de la más reciente hacia atrás (Command)
 
 ## Por qué el Abstract Factory aquí
 
@@ -222,6 +235,43 @@ versiones) sin abrirlos (`configuracion_hogar.py`).
 Endpoints: `GET/PUT /hogar/configuracion` (400 si el cambio es inválido o vacío),
 `POST /hogar/configuracion/deshacer` y `POST /hogar/configuracion/rehacer` (409 si
 no hay versión).
+
+## Por qué el Strategy aquí
+
+La subasta cerraba siempre al precio del vendedor, con la regla escrita dentro de
+`ejecutar_subasta`. Ahora el precio de cada cruce lo decide la estrategia que
+tenga configurada la plataforma: `PrecioVendedor` (por defecto, el comportamiento
+de antes), `PrecioComprador` o `PrecioPuntoMedio` (`estrategias_precio.py`). El
+emparejamiento no cambia; cada transacción guarda `estrategia_precio`.
+
+Endpoints: `GET /subasta/estrategia` (actual y disponibles) y `PUT
+/subasta/estrategia` (400 si la regla no existe).
+
+## Por qué el Template Method aquí
+
+La liquidación del periodo es el mismo algoritmo para los dos roles: validar el
+periodo (AAAA-MM), filtrar sus transacciones, sumar el importe, aplicar cargos y
+calcular el neto. `LiquidacionPeriodo.liquidar` fija ese orden y
+`LiquidacionComprador` / `LiquidacionVendedor` solo completan los pasos propios
+(`liquidaciones.py`): el comprador liquida el `total` que pagó (ya con los ajustes
+del Decorator) más una contribución del 2 %; el vendedor, el `subtotal` de su
+energía menos comisión (3 %) y retención (1 %).
+
+Endpoint: `GET /liquidacion?rol=comprador|vendedor&periodo=AAAA-MM` (400 si el rol
+o el periodo no son válidos).
+
+## Por qué el Command aquí
+
+Cada operación del mercado es un objeto con `ejecutar` y `deshacer`; la
+plataforma es el receptor y `GestorOperaciones` (uno por usuario) la cola, el
+historial y el registro (`operaciones_mercado.py`). Deshacer respeta el ciclo de
+vida de la orden (State): deshacer una publicación la cancela (409 si ya se
+completó) y, como una orden cancelada no se reabre, deshacer una cancelación
+vuelve a publicar lo pendiente como orden nueva.
+
+Endpoints: `GET/POST /operaciones` (400 si la operación está mal armada), `POST
+/operaciones/ejecutar`, `POST /operaciones/deshacer` (409 si no hay o no se
+puede) y `DELETE /operaciones/pendientes`.
 
 ## Autenticación
 

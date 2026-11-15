@@ -24,7 +24,8 @@ Documentacion/
 ├── Semana 9/            # patrones Bridge y Facade
 ├── Semana 10/           # patrones Flyweight y Proxy
 ├── Semana 13/           # patrones de comportamiento Iterator, Mediator y Memento
-└── Semana 14/           # patrones de comportamiento Observer, State y Visitor
+├── Semana 14/           # patrones de comportamiento Observer, State y Visitor
+└── Semana 15/           # patrones de comportamiento Command, Strategy y Template Method
 ```
 
 El documento Word y la contextualización también están en [`Documentacion/`](Documentacion/).

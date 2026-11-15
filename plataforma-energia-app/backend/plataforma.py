@@ -25,6 +25,7 @@ from coordinacion_hogar import (
     PuntoMercado,
 )
 from estados_orden import ABIERTA, EstadoOrden
+from estrategias_precio import EstrategiaPrecio, PrecioVendedor, crear_estrategia
 from eventos_mercado import (
     ORDEN_CANCELADA,
     ORDEN_PUBLICADA,
@@ -35,7 +36,9 @@ from eventos_mercado import (
 )
 from factory_method import DispositivoIoT, crear_dispositivo
 from jerarquia import DispositivoHoja, GrupoEnergetico
+from liquidaciones import crear_liquidacion
 from notificaciones import Mensaje, crear_servicio, obtener_canal
+from operaciones_mercado import GestorOperaciones, crear_comando
 from pagos import obtener_pasarela
 from precios import CostoBase, CostoEnergia, aplicar_ajustes
 from recorrido_ordenes import COMPRA, VENTA, LibroOrdenes
@@ -168,6 +171,11 @@ class PlataformaEnergia(metaclass=SingletonMeta):
         self.baterias_hogar: dict[str, Bateria] = {}
         self.configuraciones_hogar: dict[str, ConfiguracionHogar] = {}
         self.historiales_configuracion: dict[str, HistorialConfiguracion] = {}
+        # Regla de precio de cierre de la subasta (patrón Strategy): por
+        # defecto se paga lo que pide el vendedor, como antes.
+        self.estrategia_precio: EstrategiaPrecio = PrecioVendedor()
+        # Operaciones programadas y reversibles de cada usuario (patrón Command).
+        self.gestores_operaciones: dict[str, GestorOperaciones] = {}
         self._contador_ordenes = itertools.count(1)
 
     def registrar_usuario(
@@ -472,7 +480,8 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                     break  # las ventas siguientes son aún más caras
                 if compra.puede_negociar() and venta.puede_negociar():
                     cantidad = min(compra.cantidad_kwh, venta.cantidad_kwh)
-                    precio_final = venta.precio_kwh
+                    # El precio de cierre lo decide la estrategia configurada (Strategy).
+                    precio_final = self.estrategia_precio.precio_cierre(compra, venta)
                     # Cada orden pasa a parcial o completada según su estado (State).
                     compra.ejecutar(cantidad)
                     venta.ejecutar(cantidad)
@@ -490,6 +499,7 @@ class PlataformaEnergia(metaclass=SingletonMeta):
                         "subtotal": round(cantidad * precio_final, 2),
                         "total": costo.total(),
                         "ajustes": costo.desglose()[1:],
+                        "estrategia_precio": self.estrategia_precio.nombre,
                         "timestamp": momento.isoformat(),
                     }
                     transacciones.append(tx)
@@ -513,6 +523,42 @@ class PlataformaEnergia(metaclass=SingletonMeta):
 
         self._archivar_ordenes_cerradas()
         return transacciones
+
+    # ---------- Precio de cierre de la subasta (patrón Strategy) ----------
+    def cambiar_estrategia_precio(self, nombre: str) -> EstrategiaPrecio:
+        """Reemplaza la regla en caliente; la próxima subasta ya la usa."""
+        self.estrategia_precio = crear_estrategia(nombre)  # ValueError si no existe
+        return self.estrategia_precio
+
+    # ---------- Liquidación del periodo (patrón Template Method) ----------
+    def liquidar_periodo(self, usuario_id: str, rol: str, periodo: Optional[str] = None) -> dict:
+        """Mismos pasos para comprador y vendedor; cada rol completa los suyos."""
+        periodo = periodo or datetime.now().strftime("%Y-%m")
+        return crear_liquidacion(rol).liquidar(self.historial_transacciones, usuario_id, periodo)
+
+    # ---------- Operaciones programadas (patrón Command) ----------
+    def gestor_operaciones(self, usuario_id: str) -> GestorOperaciones:
+        return self.gestores_operaciones.setdefault(usuario_id, GestorOperaciones())
+
+    def programar_operacion(self, usuario_id: str, tipo: str, **datos) -> dict:
+        """La plataforma es el Receiver: el comando guarda la solicitud para después."""
+        gestor = self.gestor_operaciones(usuario_id)
+        gestor.programar(crear_comando(self, usuario_id, tipo, **datos))
+        return gestor.to_dict()
+
+    def ejecutar_operaciones(self, usuario_id: str) -> dict:
+        gestor = self.gestor_operaciones(usuario_id)
+        lote = gestor.ejecutar_pendientes()
+        return {"lote": lote, **gestor.to_dict()}
+
+    def deshacer_operacion(self, usuario_id: str) -> dict:
+        gestor = self.gestor_operaciones(usuario_id)
+        comando = gestor.deshacer()  # OperacionInvalida si no hay o no se puede
+        return {"deshecho": comando.descripcion(), **gestor.to_dict()}
+
+    def descartar_operaciones(self, usuario_id: str) -> dict:
+        gestor = self.gestor_operaciones(usuario_id)
+        return {"descartadas": gestor.descartar_pendientes(), **gestor.to_dict()}
 
     def conectar_dispositivo(
         self,
